@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>つづくカレンダー</title>
+<meta name="description" content="続けたい習慣をカレンダーでチェックして連続日数を見える化する習慣トラッカー。会員登録不要・完全ローカル保存。">
+<meta name="theme-color" content="#10b981" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="つづく">
+<style>
+  :root{
+    --accent:#10b981; --accent2:#059669;
+    --bg:#f4f6f8; --surface:#ffffff; --surface2:#f8fafc;
+    --text:#0f172a; --muted:#64748b; --line:#e6e9ee; --empty:#eceff3;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+    --danger:#ef4444;
+    --safe-t:env(safe-area-inset-top); --safe-b:env(safe-area-inset-bottom);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0b1220; --surface:#131c2b; --surface2:#0f1826;
+      --text:#e7ecf3; --muted:#94a3b8; --line:#25324a; --empty:#1b2536;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI",Meiryo,system-ui,sans-serif;
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;color:inherit;cursor:pointer}
+  .app{max-width:520px;margin:0 auto;min-height:100vh;padding:0 16px calc(96px + var(--safe-b))}
+  /* header */
+  header{
+    position:sticky;top:0;z-index:20;background:var(--bg);
+    padding:calc(12px + var(--safe-t)) 0 10px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .brand .logo{width:34px;height:34px;border-radius:9px;flex:0 0 auto;box-shadow:0 2px 6px rgba(5,150,105,.35)}
+  .brand h1{font-size:19px;margin:0;font-weight:800;letter-spacing:.01em;white-space:nowrap}
+  .icon-btn{
+    width:40px;height:40px;border:none;border-radius:12px;background:var(--surface);
+    box-shadow:var(--shadow);display:grid;place-items:center;font-size:19px;flex:0 0 auto
+  }
+  .icon-btn:active{transform:scale(.94)}
+  /* today summary */
+  .summary{
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#fff;border-radius:18px;padding:16px 18px;margin:4px 0 16px;
+    box-shadow:0 8px 22px rgba(5,150,105,.28);position:relative;overflow:hidden
+  }
+  .summary .date{font-size:12.5px;opacity:.9;font-weight:600}
+  .summary .big{font-size:22px;font-weight:800;margin-top:2px}
+  .summary .sub{font-size:13px;opacity:.92;margin-top:2px}
+  .bar{height:8px;border-radius:99px;background:rgba(255,255,255,.28);margin-top:12px;overflow:hidden}
+  .bar > i{display:block;height:100%;background:#fff;border-radius:99px;transition:width .35s ease}
+  /* habit card */
+  .card{
+    background:var(--surface);border-radius:18px;padding:14px 14px 12px;margin-bottom:12px;
+    box-shadow:var(--shadow);border:1px solid var(--line);position:relative
+  }
+  .card .top{display:flex;align-items:center;gap:10px}
+  .swatch{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:19px;flex:0 0 auto}
+  .card .name{font-weight:700;font-size:16px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .menu-btn{border:none;background:transparent;font-size:20px;color:var(--muted);width:34px;height:34px;border-radius:9px}
+  .menu-btn:active{background:var(--empty)}
+  .metrics{display:flex;gap:14px;align-items:baseline;margin:10px 2px 2px}
+  .streak{font-size:15px;font-weight:800}
+  .streak small{font-weight:700;font-size:12px;color:var(--muted);margin-left:1px}
+  .best{font-size:12px;color:var(--muted);font-weight:600}
+  .flame{filter:saturate(1.1)}
+  /* week strip */
+  .week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:12px}
+  .day{
+    border:none;background:var(--empty);border-radius:11px;padding:7px 0 6px;
+    display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted)
+  }
+  .day .wd{font-size:10px;font-weight:700;letter-spacing:.02em}
+  .day .dot{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;background:transparent;border:1.5px solid transparent;color:transparent}
+  .day.done{color:#fff}
+  .day.done .dot{background:var(--hab);color:#fff}
+  .day.today .dot{border-color:var(--hab)}
+  .day.today.done .dot{border-color:transparent}
+  .day.future{opacity:.4}
+  .day:active{transform:scale(.95)}
+  /* empty state */
+  .empty-state{text-align:center;padding:26px 10px 8px;color:var(--muted)}
+  .empty-state .em{font-size:44px}
+  .empty-state h2{color:var(--text);font-size:17px;margin:10px 0 4px}
+  .empty-state p{font-size:13.5px;margin:0 auto;max-width:280px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
+  .chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:8px 14px;font-size:13px;font-weight:600;box-shadow:var(--shadow)}
+  .chip:active{transform:scale(.96)}
+  /* FAB */
+  .fab{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + var(--safe-b));
+    z-index:30;border:none;border-radius:99px;padding:14px 22px;font-size:15px;font-weight:800;color:#fff;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    box-shadow:0 10px 26px rgba(5,150,105,.45);display:flex;align-items:center;gap:8px
+  }
+  .fab:active{transform:translateX(-50%) scale(.96)}
+  .fab .plus{font-size:20px;line-height:1;margin-top:-1px}
+  /* overlay + sheet */
+  .overlay{
+    position:fixed;inset:0;z-index:50;background:rgba(9,14,24,.5);
+    display:flex;align-items:flex-end;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity .2s ease;backdrop-filter:blur(2px)
+  }
+  .overlay.on{opacity:1;pointer-events:auto}
+  .sheet{
+    width:100%;max-width:520px;background:var(--surface);
+    border-radius:22px 22px 0 0;padding:8px 18px calc(20px + var(--safe-b));
+    box-shadow:0 -10px 40px rgba(0,0,0,.25);transform:translateY(20px);transition:transform .22s ease;
+    max-height:92vh;overflow:auto
+  }
+  .overlay.on .sheet{transform:translateY(0)}
+  .grip{width:38px;height:4px;border-radius:99px;background:var(--line);margin:6px auto 12px}
+  .sheet h3{margin:2px 0 14px;font-size:18px;font-weight:800}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:7px}
+  .field input[type=text]{
+    width:100%;border:1.5px solid var(--line);background:var(--surface2);color:var(--text);
+    border-radius:12px;padding:12px 14px;font-size:16px;outline:none
+  }
+  .field input[type=text]:focus{border-color:var(--accent)}
+  .pick{display:flex;flex-wrap:wrap;gap:8px}
+  .pick .opt{
+    width:44px;height:44px;border-radius:12px;border:2px solid transparent;background:var(--surface2);
+    display:grid;place-items:center;font-size:20px
+  }
+  .pick .opt.sel{border-color:var(--text)}
+  .pick .col{width:36px;height:36px;border-radius:50%;border:3px solid transparent}
+  .pick .col.sel{border-color:var(--text)}
+  .row{display:flex;gap:10px;margin-top:6px}
+  .btn{flex:1;border:none;border-radius:13px;padding:14px;font-size:15.5px;font-weight:800}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 8px 20px rgba(5,150,105,.35)}
+  .btn.ghost{background:var(--empty);color:var(--text)}
+  .btn.danger{background:transparent;color:var(--danger);border:1.5px solid var(--danger)}
+  .btn:active{transform:scale(.97)}
+  .sheet .list-item{
+    display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:none;background:transparent;
+    padding:14px 4px;font-size:15px;font-weight:600;border-bottom:1px solid var(--line)
+  }
+  .sheet .list-item:last-child{border-bottom:none}
+  .sheet .list-item .ic{font-size:19px;width:24px;text-align:center}
+  .sheet .list-item.danger{color:var(--danger)}
+  /* detail */
+  .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:4px 0 16px}
+  .stat{background:var(--surface2);border-radius:14px;padding:11px 6px;text-align:center}
+  .stat .v{font-size:19px;font-weight:800}
+  .stat .l{font-size:10.5px;color:var(--muted);font-weight:700;margin-top:2px}
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .cal-head .m{font-size:15px;font-weight:800}
+  .cal-head button{border:none;background:var(--empty);width:36px;height:36px;border-radius:10px;font-size:16px}
+  .cal-head button:disabled{opacity:.35}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+  .cal-grid .wd{text-align:center;font-size:10.5px;font-weight:700;color:var(--muted);padding-bottom:2px}
+  .cal-grid .cell{aspect-ratio:1;border:none;border-radius:10px;background:var(--empty);color:var(--muted);font-size:13px;font-weight:600;display:grid;place-items:center;position:relative}
+  .cal-grid .cell.blank{background:transparent}
+  .cal-grid .cell.done{background:var(--hab);color:#fff;font-weight:800}
+  .cal-grid .cell.today{outline:2px solid var(--hab);outline-offset:-2px}
+  .cal-grid .cell.future{opacity:.3}
+  .cal-grid .cell:active{transform:scale(.92)}
+  .about{font-size:12.5px;color:var(--muted);line-height:1.7}
+  .about a{color:var(--accent);font-weight:700;text-decoration:none}
+  .pop{animation:pop .28s ease}
+  @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <img class="logo" src="icon-192.png" alt="" width="34" height="34">
+      <h1>つづくカレンダー</h1>
+    </div>
+    <button class="icon-btn" data-act="settings" aria-label="設定">⚙️</button>
+  </header>
+  <div id="summary"></div>
+  <main id="list" aria-live="polite"></main>
+</div>
+
+<button class="fab" data-act="add"><span class="plus">＋</span>習慣を追加</button>
+<div class="overlay" id="overlay"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY = "tsuzuku.v1";
+  var WD = ["日","月","火","水","木","金","土"];
+  var EMOJIS = ["✅","💧","🏃","📖","🧘","💪","🌱","✍️","🦷","🛏️","🍎","🧹","☀️","🎸","🐶","💊","🚭","🧴","🏋️","😴"];
+  var COLORS = ["#10b981","#3b82f6","#8b5cf6","#ef4444","#f59e0b","#14b8a6","#ec4899","#64748b"];
+  var SUGGEST = [
+    {name:"水を飲む",emoji:"💧",color:"#3b82f6"},
+    {name:"ストレッチ",emoji:"🧘",color:"#8b5cf6"},
+    {name:"読書",emoji:"📖",color:"#f59e0b"},
+    {name:"散歩",emoji:"🏃",color:"#10b981"},
+    {name:"筋トレ",emoji:"💪",color:"#ef4444"}
+  ];
+
+  /* ---------- pure date + streak helpers ---------- */
+  function pad(n){ return n < 10 ? "0" + n : "" + n; }
+  function todayStr(){
+    var d = new Date();
+    return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+  }
+  function parse(s){ var a = s.split("-"); return new Date(+a[0], +a[1]-1, +a[2]); }
+  function addDays(s, delta){
+    var d = parse(s); d.setDate(d.getDate() + delta);
+    return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+  }
+  function isDone(h, d){ return !!(h.records && h.records[d]); }
+  function currentStreak(h, today){
+    var d = today;
+    if (!isDone(h, d)) d = addDays(today, -1);
+    var n = 0;
+    while (isDone(h, d)) { n++; d = addDays(d, -1); }
+    return n;
+  }
+  function bestStreak(h){
+    var days = Object.keys(h.records || {}).filter(function(k){ return h.records[k]; }).sort();
+    var best = 0, cur = 0, prev = null, i;
+    for (i = 0; i < days.length; i++){
+      if (prev && addDays(prev, 1) === days[i]) cur++; else cur = 1;
+      if (cur > best) best = cur;
+      prev = days[i];
+    }
+    return best;
+  }
+  function totalDone(h){
+    return Object.keys(h.records || {}).filter(function(k){ return h.records[k]; }).length;
+  }
+  function monthCount(h, y, m){
+    var pre = y + "-" + pad(m+1) + "-";
+    return Object.keys(h.records || {}).filter(function(k){ return h.records[k] && k.indexOf(pre) === 0; }).length;
+  }
+  function rateSince(h, today){
+    var start = h.createdAt || today;
+    var span = Math.round((parse(today) - parse(start)) / 86400000) + 1;
+    if (span < 1) span = 1;
+    return Math.round(totalDone(h) / span * 100);
+  }
+
+  /* ---------- storage ---------- */
+  var db = load();
+  function load(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if (raw){ var o = JSON.parse(raw); if (o && o.habits) return o; }
+    }catch(e){}
+    return { version: 1, habits: [] };
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){} }
+  function uid(){ return "h" + Date.now().toString(36) + Math.floor(Math.random()*1e5).toString(36); }
+  function getHabit(id){ for (var i=0;i<db.habits.length;i++){ if (db.habits[i].id===id) return db.habits[i]; } return null; }
+
+  /* ---------- rendering ---------- */
+  var listEl = document.getElementById("list");
+  var sumEl = document.getElementById("summary");
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+
+  function render(){
+    renderSummary();
+    renderList();
+  }
+
+  function renderSummary(){
+    var t = todayStr();
+    var total = db.habits.length;
+    var doneToday = 0;
+    for (var i=0;i<total;i++){ if (isDone(db.habits[i], t)) doneToday++; }
+    var d = new Date();
+    var dateLabel = (d.getMonth()+1) + "月" + d.getDate() + "日(" + WD[d.getDay()] + ")";
+    if (total === 0){ sumEl.innerHTML = ""; return; }
+    var pct = Math.round(doneToday / total * 100);
+    var msg = doneToday === total ? "今日はぜんぶ達成！えらい🎉"
+            : doneToday === 0 ? "今日のチェックをはじめよう"
+            : "あと " + (total - doneToday) + " 個！";
+    sumEl.innerHTML =
+      '<div class="summary">' +
+        '<div class="date">' + dateLabel + '</div>' +
+        '<div class="big">今日 ' + doneToday + ' / ' + total + ' 完了</div>' +
+        '<div class="sub">' + msg + '</div>' +
+        '<div class="bar"><i style="width:' + pct + '%"></i></div>' +
+      '</div>';
+  }
+
+  function weekStrip(h){
+    var t = todayStr();
+    var html = '<div class="week">';
+    for (var k = 6; k >= 0; k--){
+      var ds = addDays(t, -k);
+      var wd = WD[parse(ds).getDay()];
+      var cls = "day" + (isDone(h, ds) ? " done" : "") + (k === 0 ? " today" : "");
+      html += '<button class="' + cls + '" data-act="toggle-day" data-id="' + h.id + '" data-date="' + ds + '" aria-label="' + ds + '">' +
+                '<span class="wd">' + wd + '</span>' +
+                '<span class="dot">✓</span>' +
+              '</button>';
+    }
+    return html + '</div>';
+  }
+
+  function renderList(){
+    if (db.habits.length === 0){
+      listEl.innerHTML =
+        '<div class="empty-state">' +
+          '<div class="em">🌱</div>' +
+          '<h2>習慣をひとつ、はじめよう</h2>' +
+          '<p>毎日タップでチェック。連続日数が伸びていくのが見えます。</p>' +
+          '<div class="chips">' +
+            SUGGEST.map(function(s,i){ return '<button class="chip" data-act="quick" data-i="' + i + '">' + s.emoji + ' ' + esc(s.name) + '</button>'; }).join("") +
+          '</div>' +
+        '</div>';
+      return;
+    }
+    var t = todayStr();
+    var html = "";
+    for (var i=0;i<db.habits.length;i++){
+      var h = db.habits[i];
+      var cs = currentStreak(h, t);
+      var bs = bestStreak(h);
+      var streakTxt = cs > 0
+        ? '<span class="flame">🔥</span> ' + cs + '<small>日連続</small>'
+        : '<span style="color:var(--muted)">まだ連続なし</span>';
+      html +=
+        '<section class="card" style="--hab:' + h.color + '">' +
+          '<div class="top" data-act="detail" data-id="' + h.id + '">' +
+            '<span class="swatch" style="background:' + h.color + '22">' + h.emoji + '</span>' +
+            '<span class="name">' + esc(h.name) + '</span>' +
+            '<button class="menu-btn" data-act="menu" data-id="' + h.id + '" aria-label="メニュー">⋯</button>' +
+          '</div>' +
+          '<div class="metrics">' +
+            '<span class="streak">' + streakTxt + '</span>' +
+            '<span class="best">最高 ' + bs + '日</span>' +
+          '</div>' +
+          weekStrip(h) +
+        '</section>';
+    }
+    listEl.innerHTML = html;
+  }
+
+  /* ---------- modal plumbing ---------- */
+  var overlay = document.getElementById("overlay");
+  var sheet = document.getElementById("sheet");
+  function openSheet(html){ sheet.innerHTML = '<div class="grip"></div>' + html; overlay.classList.add("on"); }
+  function closeSheet(){ overlay.classList.remove("on"); }
+  overlay.addEventListener("click", function(e){ if (e.target === overlay) closeSheet(); });
+
+  /* temp state for add/edit forms */
+  var form = { emoji: EMOJIS[0], color: COLORS[0] };
+
+  function habitForm(title, h){
+    form.emoji = h ? h.emoji : EMOJIS[0];
+    form.color = h ? h.color : COLORS[0];
+    var name = h ? h.name : "";
+    openSheet(
+      '<h3>' + title + '</h3>' +
+      '<div class="field"><label>習慣の名前</label>' +
+        '<input type="text" id="f-name" maxlength="24" placeholder="例：水を飲む" value="' + esc(name) + '"></div>' +
+      '<div class="field"><label>アイコン</label><div class="pick" id="f-emoji">' +
+        EMOJIS.map(function(e){ return '<button class="opt' + (e===form.emoji?" sel":"") + '" data-emoji="' + e + '">' + e + '</button>'; }).join("") +
+      '</div></div>' +
+      '<div class="field"><label>カラー</label><div class="pick" id="f-color">' +
+        COLORS.map(function(c){ return '<button class="col' + (c===form.color?" sel":"") + '" style="background:' + c + '" data-color="' + c + '" aria-label="color"></button>'; }).join("") +
+      '</div></div>' +
+      '<div class="row">' +
+        '<button class="btn ghost" data-act="close">キャンセル</button>' +
+        '<button class="btn primary" data-act="' + (h ? "save-edit" : "save-add") + '" data-id="' + (h ? h.id : "") + '">保存</button>' +
+      '</div>'
+    );
+    var ne = document.getElementById("f-name");
+    document.getElementById("f-emoji").addEventListener("click", function(ev){
+      var b = ev.target.closest("[data-emoji]"); if (!b) return;
+      form.emoji = b.getAttribute("data-emoji");
+      this.querySelectorAll(".opt").forEach(function(o){ o.classList.toggle("sel", o===b); });
+    });
+    document.getElementById("f-color").addEventListener("click", function(ev){
+      var b = ev.target.closest("[data-color]"); if (!b) return;
+      form.color = b.getAttribute("data-color");
+      this.querySelectorAll(".col").forEach(function(o){ o.classList.toggle("sel", o===b); });
+    });
+    setTimeout(function(){ if (!h) ne.focus(); }, 60);
+  }
+
+  function menuSheet(h){
+    openSheet(
+      '<h3>' + esc(h.name) + '</h3>' +
+      '<button class="list-item" data-act="detail" data-id="' + h.id + '"><span class="ic">📅</span>カレンダーを見る</button>' +
+      '<button class="list-item" data-act="edit" data-id="' + h.id + '"><span class="ic">✏️</span>編集する</button>' +
+      '<button class="list-item danger" data-act="delete" data-id="' + h.id + '"><span class="ic">🗑️</span>削除する</button>'
+    );
+  }
+
+  /* detail modal keeps its own view month */
+  var detailMonth = null; // {y, m}
+  function detailSheet(h){
+    var t = todayStr(), td = parse(t);
+    if (!detailMonth) detailMonth = { y: td.getFullYear(), m: td.getMonth() };
+    var y = detailMonth.y, m = detailMonth.m;
+    var cs = currentStreak(h, t), bs = bestStreak(h), mc = monthCount(h, y, m), rt = rateSince(h, t);
+    var first = new Date(y, m, 1).getDay();
+    var dim = new Date(y, m+1, 0).getDate();
+    var isCurMonth = (y === td.getFullYear() && m === td.getMonth());
+    var cells = "";
+    var w;
+    for (w = 0; w < 7; w++) cells += '<div class="wd">' + WD[w] + '</div>';
+    for (w = 0; w < first; w++) cells += '<div class="cell blank"></div>';
+    for (var d = 1; d <= dim; d++){
+      var ds = y + "-" + pad(m+1) + "-" + pad(d);
+      var future = parse(ds) > td;
+      var cls = "cell" + (isDone(h, ds) ? " done" : "") + (ds === t ? " today" : "") + (future ? " future" : "");
+      cells += future
+        ? '<div class="' + cls + '">' + d + '</div>'
+        : '<button class="' + cls + '" data-act="toggle-cal" data-id="' + h.id + '" data-date="' + ds + '">' + d + '</button>';
+    }
+    openSheet(
+      '<h3 style="display:flex;align-items:center;gap:9px">' +
+        '<span class="swatch" style="width:30px;height:30px;font-size:16px;background:' + h.color + '22">' + h.emoji + '</span>' +
+        esc(h.name) + '</h3>' +
+      '<div class="stat-row" style="--hab:' + h.color + '">' +
+        '<div class="stat"><div class="v">' + cs + '</div><div class="l">連続</div></div>' +
+        '<div class="stat"><div class="v">' + bs + '</div><div class="l">最高</div></div>' +
+        '<div class="stat"><div class="v">' + mc + '</div><div class="l">今月</div></div>' +
+        '<div class="stat"><div class="v">' + rt + '%</div><div class="l">達成率</div></div>' +
+      '</div>' +
+      '<div class="cal-head">' +
+        '<button data-act="cal-prev" data-id="' + h.id + '" aria-label="前の月">‹</button>' +
+        '<span class="m">' + y + '年' + (m+1) + '月</span>' +
+        '<button data-act="cal-next" data-id="' + h.id + '" ' + (isCurMonth ? "disabled" : "") + ' aria-label="次の月">›</button>' +
+      '</div>' +
+      '<div class="cal-grid" style="--hab:' + h.color + '">' + cells + '</div>' +
+      '<div class="row"><button class="btn ghost" data-act="edit" data-id="' + h.id + '">編集</button>' +
+      '<button class="btn danger" data-act="delete" data-id="' + h.id + '">削除</button></div>'
+    );
+  }
+
+  function settingsSheet(){
+    var count = db.habits.length;
+    var checks = 0;
+    db.habits.forEach(function(h){ checks += totalDone(h); });
+    openSheet(
+      '<h3>設定</h3>' +
+      '<button class="list-item" data-act="export"><span class="ic">⬇️</span>データを書き出す (JSON)</button>' +
+      '<button class="list-item danger" data-act="wipe"><span class="ic">🗑️</span>すべてのデータを削除</button>' +
+      '<div class="about" style="margin-top:16px">' +
+        '<p><b>つづくカレンダー</b> ' + count + ' 個の習慣 / これまで ' + checks + ' 回チェック</p>' +
+        '<p>データはこの端末内にのみ保存され、外部へ送信されません。' +
+        '<a href="../../privacy-habit-cal.html">プライバシーポリシー</a></p>' +
+        '<p style="opacity:.7">ver 1.0.0</p>' +
+      '</div>'
+    );
+  }
+
+  /* ---------- actions ---------- */
+  function toggle(h, ds){ if (!h.records) h.records = {}; if (h.records[ds]) delete h.records[ds]; else h.records[ds] = 1; save(); }
+
+  document.body.addEventListener("click", function(ev){
+    var el = ev.target.closest("[data-act]");
+    if (!el) return;
+    var act = el.getAttribute("data-act");
+    var id = el.getAttribute("data-id");
+    var h = id ? getHabit(id) : null;
+
+    switch(act){
+      case "add": habitForm("習慣を追加"); break;
+      case "quick": {
+        var s = SUGGEST[+el.getAttribute("data-i")];
+        db.habits.push({ id: uid(), name: s.name, emoji: s.emoji, color: s.color, createdAt: todayStr(), records: {} });
+        save(); render();
+        break;
+      }
+      case "settings": settingsSheet(); break;
+      case "menu": menuSheet(h); break;
+      case "detail": detailMonth = null; detailSheet(h); break;
+      case "edit": habitForm("習慣を編集", h); break;
+      case "close": closeSheet(); break;
+      case "toggle-day": {
+        toggle(h, el.getAttribute("data-date"));
+        var dot = el.querySelector(".dot");
+        if (dot){ dot.classList.remove("pop"); void dot.offsetWidth; dot.classList.add("pop"); }
+        render();
+        break;
+      }
+      case "toggle-cal": {
+        toggle(h, el.getAttribute("data-date"));
+        detailSheet(h);
+        break;
+      }
+      case "cal-prev": {
+        detailMonth.m--; if (detailMonth.m < 0){ detailMonth.m = 11; detailMonth.y--; }
+        detailSheet(h); break;
+      }
+      case "cal-next": {
+        detailMonth.m++; if (detailMonth.m > 11){ detailMonth.m = 0; detailMonth.y++; }
+        detailSheet(h); break;
+      }
+      case "save-add": {
+        var nm = (document.getElementById("f-name").value || "").trim();
+        if (!nm){ nm = "無題の習慣"; }
+        db.habits.push({ id: uid(), name: nm, emoji: form.emoji, color: form.color, createdAt: todayStr(), records: {} });
+        save(); closeSheet(); render();
+        break;
+      }
+      case "save-edit": {
+        var name2 = (document.getElementById("f-name").value || "").trim();
+        if (h){ h.name = name2 || h.name; h.emoji = form.emoji; h.color = form.color; save(); }
+        closeSheet(); render();
+        break;
+      }
+      case "delete": {
+        if (confirm("「" + (h ? h.name : "") + "」を削除します。記録も消えます。よろしいですか？")){
+          db.habits = db.habits.filter(function(x){ return x.id !== id; });
+          save(); closeSheet(); render();
+        }
+        break;
+      }
+      case "export": {
+        var blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url; a.download = "tsuzuku-backup-" + todayStr() + ".json";
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+        break;
+      }
+      case "wipe": {
+        if (confirm("すべての習慣と記録を削除します。元に戻せません。よろしいですか？")){
+          db = { version: 1, habits: [] }; save(); closeSheet(); render();
+        }
+        break;
+      }
+    }
+  });
+
+  /* ---------- boot ---------- */
+  render();
+
+  if ("serviceWorker" in navigator){
+    window.addEventListener("load", function(){
+      navigator.serviceWorker.register("sw.js").catch(function(){});
+    });
+  }
+
+  // expose pure helpers for optional testing
+  window.__tsuzuku = { addDays: addDays, currentStreak: currentStreak, bestStreak: bestStreak, todayStr: todayStr };
+})();
+</script>
+</body>
+</html>
