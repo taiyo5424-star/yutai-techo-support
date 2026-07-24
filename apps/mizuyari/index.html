@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>水やりメモ</title>
+<meta name="description" content="植物の水やりを記録して、次の水やり日と時期の来た株を見える化するメモ。会員登録不要・完全ローカル保存。">
+<meta name="theme-color" content="#22c55e" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="水やり">
+<style>
+  :root{
+    --accent:#22c55e; --accent2:#16a34a;
+    --bg:#f4f6f8; --surface:#ffffff; --surface2:#f8fafc;
+    --text:#0f172a; --muted:#64748b; --line:#e6e9ee; --empty:#eceff3;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+    --danger:#ef4444; --warn:#f59e0b;
+    --safe-t:env(safe-area-inset-top); --safe-b:env(safe-area-inset-bottom);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0b1220; --surface:#131c2b; --surface2:#0f1826;
+      --text:#e7ecf3; --muted:#94a3b8; --line:#25324a; --empty:#1b2536;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI",Meiryo,system-ui,sans-serif;
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;color:inherit;cursor:pointer}
+  .app{max-width:520px;margin:0 auto;min-height:100vh;padding:0 16px calc(96px + var(--safe-b))}
+  /* header */
+  header{
+    position:sticky;top:0;z-index:20;background:var(--bg);
+    padding:calc(12px + var(--safe-t)) 0 10px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .brand .logo{width:34px;height:34px;border-radius:9px;flex:0 0 auto;box-shadow:0 2px 6px rgba(22,163,74,.35)}
+  .brand h1{font-size:19px;margin:0;font-weight:800;letter-spacing:.01em;white-space:nowrap}
+  .icon-btn{
+    width:40px;height:40px;border:none;border-radius:12px;background:var(--surface);
+    box-shadow:var(--shadow);display:grid;place-items:center;font-size:19px;flex:0 0 auto
+  }
+  .icon-btn:active{transform:scale(.94)}
+  /* summary */
+  .summary{
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#fff;border-radius:18px;padding:16px 18px;margin:4px 0 16px;
+    box-shadow:0 8px 22px rgba(22,163,74,.28);position:relative;overflow:hidden
+  }
+  .summary .date{font-size:12.5px;opacity:.9;font-weight:600}
+  .summary .big{font-size:22px;font-weight:800;margin-top:2px}
+  .summary .sub{font-size:13px;opacity:.92;margin-top:2px}
+  .bar{height:8px;border-radius:99px;background:rgba(255,255,255,.28);margin-top:12px;overflow:hidden}
+  .bar > i{display:block;height:100%;background:#fff;border-radius:99px;transition:width .35s ease}
+  /* plant card */
+  .card{
+    background:var(--surface);border-radius:18px;padding:14px 14px 14px;margin-bottom:12px;
+    box-shadow:var(--shadow);border:1px solid var(--line);position:relative
+  }
+  .card.hot{border-color:var(--warn)}
+  .card.over{border-color:var(--danger)}
+  .card .top{display:flex;align-items:center;gap:11px}
+  .swatch{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:22px;flex:0 0 auto}
+  .card .name{font-weight:700;font-size:16px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .menu-btn{border:none;background:transparent;font-size:20px;color:var(--muted);width:34px;height:34px;border-radius:9px;flex:0 0 auto}
+  .menu-btn:active{background:var(--empty)}
+  .status{font-size:13.5px;font-weight:600;color:var(--muted);margin:11px 2px 0}
+  .status.st-hot{color:var(--warn)}
+  .status.st-over{color:var(--danger)}
+  .status b{color:var(--text)}
+  .pbar{height:8px;border-radius:99px;background:var(--empty);margin:9px 2px 0;overflow:hidden}
+  .pbar > i{display:block;height:100%;border-radius:99px;transition:width .35s ease;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .pbar.hot > i{background:var(--warn)}
+  .pbar.over > i{background:var(--danger)}
+  .water{
+    width:100%;margin-top:13px;border:none;border-radius:13px;padding:13px;font-size:15.5px;font-weight:800;color:#fff;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 6px 16px rgba(22,163,74,.3);
+    display:flex;align-items:center;justify-content:center;gap:7px
+  }
+  .water.done{background:var(--empty);color:var(--muted);box-shadow:none}
+  .water:active{transform:scale(.98)}
+  /* empty state */
+  .empty-state{text-align:center;padding:26px 10px 8px;color:var(--muted)}
+  .empty-state .em{font-size:44px}
+  .empty-state h2{color:var(--text);font-size:17px;margin:10px 0 4px}
+  .empty-state p{font-size:13.5px;margin:0 auto;max-width:280px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
+  .chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:8px 14px;font-size:13px;font-weight:600;box-shadow:var(--shadow)}
+  .chip:active{transform:scale(.96)}
+  /* FAB */
+  .fab{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + var(--safe-b));
+    z-index:30;border:none;border-radius:99px;padding:14px 22px;font-size:15px;font-weight:800;color:#fff;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    box-shadow:0 10px 26px rgba(22,163,74,.45);display:flex;align-items:center;gap:8px
+  }
+  .fab:active{transform:translateX(-50%) scale(.96)}
+  .fab .plus{font-size:20px;line-height:1;margin-top:-1px}
+  /* overlay + sheet */
+  .overlay{
+    position:fixed;inset:0;z-index:50;background:rgba(9,14,24,.5);
+    display:flex;align-items:flex-end;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity .2s ease;backdrop-filter:blur(2px)
+  }
+  .overlay.on{opacity:1;pointer-events:auto}
+  .sheet{
+    width:100%;max-width:520px;background:var(--surface);
+    border-radius:22px 22px 0 0;padding:8px 18px calc(20px + var(--safe-b));
+    box-shadow:0 -10px 40px rgba(0,0,0,.25);transform:translateY(20px);transition:transform .22s ease;
+    max-height:92vh;overflow:auto
+  }
+  .overlay.on .sheet{transform:translateY(0)}
+  .grip{width:38px;height:4px;border-radius:99px;background:var(--line);margin:6px auto 12px}
+  .sheet h3{margin:2px 0 14px;font-size:18px;font-weight:800}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:7px}
+  .field input[type=text],.field input[type=number]{
+    width:100%;border:1.5px solid var(--line);background:var(--surface2);color:var(--text);
+    border-radius:12px;padding:12px 14px;font-size:16px;outline:none
+  }
+  .field input:focus{border-color:var(--accent)}
+  .pick{display:flex;flex-wrap:wrap;gap:8px}
+  .pick .opt{
+    width:44px;height:44px;border-radius:12px;border:2px solid transparent;background:var(--surface2);
+    display:grid;place-items:center;font-size:22px
+  }
+  .pick .opt.sel{border-color:var(--text)}
+  .pick .col{width:36px;height:36px;border-radius:50%;border:3px solid transparent}
+  .pick .col.sel{border-color:var(--text)}
+  .pick .seg{
+    min-width:52px;height:44px;padding:0 12px;border-radius:12px;border:2px solid var(--line);background:var(--surface2);
+    font-size:14px;font-weight:700;color:var(--text);display:grid;place-items:center
+  }
+  .pick .seg.sel{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface2))}
+  .row{display:flex;gap:10px;margin-top:6px}
+  .btn{flex:1;border:none;border-radius:13px;padding:14px;font-size:15.5px;font-weight:800}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 8px 20px rgba(22,163,74,.35)}
+  .btn.ghost{background:var(--empty);color:var(--text)}
+  .btn.danger{background:transparent;color:var(--danger);border:1.5px solid var(--danger)}
+  .btn:active{transform:scale(.97)}
+  .sheet .list-item{
+    display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:none;background:transparent;
+    padding:14px 4px;font-size:15px;font-weight:600;border-bottom:1px solid var(--line)
+  }
+  .sheet .list-item:last-child{border-bottom:none}
+  .sheet .list-item .ic{font-size:19px;width:24px;text-align:center}
+  .sheet .list-item.danger{color:var(--danger)}
+  .about{font-size:12.5px;color:var(--muted);line-height:1.7}
+  .about a{color:var(--accent);font-weight:700;text-decoration:none}
+  .pop{animation:pop .3s ease}
+  @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <img class="logo" src="icon-192.png" alt="" width="34" height="34">
+      <h1>水やりメモ</h1>
+    </div>
+    <button class="icon-btn" data-act="settings" aria-label="設定">⚙️</button>
+  </header>
+  <div id="summary"></div>
+  <main id="list" aria-live="polite"></main>
+</div>
+
+<button class="fab" data-act="add"><span class="plus">＋</span>植物を追加</button>
+<div class="overlay" id="overlay"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY = "mizuyari.v1";
+  var WD = ["日","月","火","水","木","金","土"];
+  var EMOJIS = ["🪴","🌱","🌵","🌿","🌸","🍅","🌴"];
+  var COLORS = ["#22c55e","#16a34a","#10b981","#84cc16","#eab308","#f59e0b","#ec4899","#3b82f6"];
+  var PRESETS = [
+    {l:"毎日", v:1},
+    {l:"2日", v:2},
+    {l:"3日", v:3},
+    {l:"週1", v:7},
+    {l:"2週", v:14}
+  ];
+  var SUGGEST = [
+    {name:"観葉植物", emoji:"🪴", interval:7,  color:"#22c55e"},
+    {name:"多肉植物", emoji:"🌵", interval:14, color:"#84cc16"},
+    {name:"ハーブ",   emoji:"🌿", interval:3,  color:"#16a34a"},
+    {name:"花",       emoji:"🌸", interval:2,  color:"#ec4899"}
+  ];
+
+  /* ---------- date helpers ---------- */
+  function pad(n){ return n < 10 ? "0" + n : "" + n; }
+  function todayStr(){
+    var d = new Date();
+    return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+  }
+  function parse(s){ var a = s.split("-"); return new Date(+a[0], +a[1]-1, +a[2]); }
+  function addDays(s, delta){
+    var d = parse(s); d.setDate(d.getDate() + delta);
+    return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+  }
+  function diffDays(from, to){ return Math.round((parse(to) - parse(from)) / 86400000); }
+
+  /* ---------- status computation ---------- */
+  // returns {state:'unrec'|'ok'|'due'|'over', since, until, over, pct, sortKey}
+  function statusOf(p, t){
+    var iv = p.interval > 0 ? p.interval : 1;
+    if (!p.last){
+      return { state:"unrec", since:null, until:null, over:0, pct:100, sortKey:-0.5 };
+    }
+    var since = diffDays(p.last, t);
+    if (since < 0) since = 0;
+    var until = iv - since; // days until next watering
+    var pct = Math.max(0, Math.min(100, Math.round(since / iv * 100)));
+    if (until > 0)  return { state:"ok",  since:since, until:until, over:0, pct:pct, sortKey:until };
+    if (until === 0) return { state:"due", since:since, until:0, over:0, pct:100, sortKey:0 };
+    return { state:"over", since:since, until:0, over:-until, pct:100, sortKey:until };
+  }
+  function needsWater(st){ return st.state !== "ok"; }
+
+  /* ---------- storage ---------- */
+  var db = load();
+  function load(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if (raw){ var o = JSON.parse(raw); if (o && o.plants) return o; }
+    }catch(e){}
+    return { version: 1, plants: [] };
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){} }
+  function uid(){ return "p" + Date.now().toString(36) + Math.floor(Math.random()*1e5).toString(36); }
+  function getPlant(id){ for (var i=0;i<db.plants.length;i++){ if (db.plants[i].id===id) return db.plants[i]; } return null; }
+
+  /* ---------- rendering ---------- */
+  var listEl = document.getElementById("list");
+  var sumEl = document.getElementById("summary");
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+
+  function render(){
+    renderSummary();
+    renderList();
+  }
+
+  function renderSummary(){
+    var t = todayStr();
+    var total = db.plants.length;
+    if (total === 0){ sumEl.innerHTML = ""; return; }
+    var due = 0, over = 0;
+    for (var i=0;i<total;i++){
+      var st = statusOf(db.plants[i], t);
+      if (needsWater(st)) due++;
+      if (st.state === "over") over++;
+    }
+    var d = new Date();
+    var dateLabel = (d.getMonth()+1) + "月" + d.getDate() + "日(" + WD[d.getDay()] + ")";
+    var pct = Math.round((total - due) / total * 100);
+    var msg = due === 0
+      ? "今日の水やりはありません 🌿"
+      : (over > 0 ? "うち " + over + " 株は時期を過ぎています" : "水やりの時期が来ています");
+    sumEl.innerHTML =
+      '<div class="summary">' +
+        '<div class="date">' + dateLabel + '</div>' +
+        '<div class="big">今日水やり ' + due + ' 株</div>' +
+        '<div class="sub">' + msg + '</div>' +
+        '<div class="bar"><i style="width:' + pct + '%"></i></div>' +
+      '</div>';
+  }
+
+  function statusLine(p, st){
+    if (st.state === "unrec"){
+      return '<div class="status st-hot">未記録 ・ ' + p.interval + '日ごと ・ 下のボタンで開始</div>';
+    }
+    if (st.state === "over"){
+      return '<div class="status st-over">💧 水やり時期です ・ <b>' + st.over + '日超過</b></div>';
+    }
+    if (st.state === "due"){
+      return '<div class="status st-hot">💧 水やり時期です（今日）</div>';
+    }
+    var sinceTxt = st.since === 0 ? "今日水やり済み" : "前回 " + st.since + "日前";
+    return '<div class="status">' + sinceTxt + ' ・ 次まであと <b>' + st.until + '日</b></div>';
+  }
+
+  function renderList(){
+    if (db.plants.length === 0){
+      listEl.innerHTML =
+        '<div class="empty-state">' +
+          '<div class="em">🪴</div>' +
+          '<h2>植物を登録しよう</h2>' +
+          '<p>水やりの間隔を決めておくと、次はいつあげればいいか一目でわかります。</p>' +
+          '<div class="chips">' +
+            SUGGEST.map(function(s,i){ return '<button class="chip" data-act="quick" data-i="' + i + '">' + s.emoji + ' ' + esc(s.name) + '（' + s.interval + '日）</button>'; }).join("") +
+          '</div>' +
+        '</div>';
+      return;
+    }
+    var t = todayStr();
+    var arr = db.plants.map(function(p){ return { p:p, st:statusOf(p, t) }; });
+    arr.sort(function(a,b){ return a.st.sortKey - b.st.sortKey; });
+    var html = "";
+    for (var i=0;i<arr.length;i++){
+      var p = arr[i].p, st = arr[i].st;
+      var hot = st.state !== "ok";
+      var cardCls = "card" + (st.state === "over" ? " over" : (hot ? " hot" : ""));
+      var barCls = "pbar" + (st.state === "over" ? " over" : (hot ? " hot" : ""));
+      var watered = st.state === "ok" && st.since === 0;
+      var btnCls = "water" + (watered ? " done" : "");
+      var btnLabel = watered ? "✅ 今日みずやり済み" : "💧 水やりをする";
+      html +=
+        '<section class="' + cardCls + '">' +
+          '<div class="top">' +
+            '<span class="swatch" style="background:' + p.color + '22">' + p.emoji + '</span>' +
+            '<span class="name">' + esc(p.name) + '</span>' +
+            '<button class="menu-btn" data-act="menu" data-id="' + p.id + '" aria-label="メニュー">⋯</button>' +
+          '</div>' +
+          statusLine(p, st) +
+          '<div class="' + barCls + '"><i style="width:' + st.pct + '%"></i></div>' +
+          '<button class="' + btnCls + '" data-act="water" data-id="' + p.id + '">' + btnLabel + '</button>' +
+        '</section>';
+    }
+    listEl.innerHTML = html;
+  }
+
+  /* ---------- modal plumbing ---------- */
+  var overlay = document.getElementById("overlay");
+  var sheet = document.getElementById("sheet");
+  function openSheet(html){ sheet.innerHTML = '<div class="grip"></div>' + html; overlay.classList.add("on"); }
+  function closeSheet(){ overlay.classList.remove("on"); }
+  overlay.addEventListener("click", function(e){ if (e.target === overlay) closeSheet(); });
+
+  /* temp state for add/edit form */
+  var form = { emoji: EMOJIS[0], color: COLORS[0], interval: 7, custom: false };
+
+  function isPreset(v){ for (var i=0;i<PRESETS.length;i++){ if (PRESETS[i].v === v) return true; } return false; }
+
+  function plantForm(title, p){
+    form.emoji = p ? p.emoji : EMOJIS[0];
+    form.color = p ? p.color : COLORS[0];
+    form.interval = p ? p.interval : 7;
+    form.custom = p ? !isPreset(p.interval) : false;
+    var name = p ? p.name : "";
+    openSheet(
+      '<h3>' + title + '</h3>' +
+      '<div class="field"><label>植物の名前</label>' +
+        '<input type="text" id="f-name" maxlength="24" placeholder="例：モンステラ" value="' + esc(name) + '"></div>' +
+      '<div class="field"><label>アイコン</label><div class="pick" id="f-emoji">' +
+        EMOJIS.map(function(e){ return '<button class="opt' + (e===form.emoji?" sel":"") + '" data-emoji="' + e + '">' + e + '</button>'; }).join("") +
+      '</div></div>' +
+      '<div class="field"><label>水やりの間隔</label><div class="pick" id="f-interval">' +
+        PRESETS.map(function(pr){ return '<button class="seg' + ((!form.custom && pr.v===form.interval)?" sel":"") + '" data-int="' + pr.v + '">' + pr.l + '</button>'; }).join("") +
+        '<button class="seg' + (form.custom?" sel":"") + '" data-int="custom">自由</button>' +
+      '</div>' +
+        '<div id="f-custom-wrap" style="margin-top:9px;' + (form.custom?"":"display:none") + '">' +
+          '<input type="number" id="f-custom" min="1" max="365" inputmode="numeric" placeholder="日数を入力" value="' + (form.custom?form.interval:"") + '">' +
+        '</div>' +
+      '</div>' +
+      '<div class="field"><label>カラー</label><div class="pick" id="f-color">' +
+        COLORS.map(function(c){ return '<button class="col' + (c===form.color?" sel":"") + '" style="background:' + c + '" data-color="' + c + '" aria-label="color"></button>'; }).join("") +
+      '</div></div>' +
+      '<div class="row">' +
+        '<button class="btn ghost" data-act="close">キャンセル</button>' +
+        '<button class="btn primary" data-act="' + (p ? "save-edit" : "save-add") + '" data-id="' + (p ? p.id : "") + '">保存</button>' +
+      '</div>' +
+      (p ? '<div class="row"><button class="btn danger" data-act="delete" data-id="' + p.id + '">この植物を削除</button></div>' : "")
+    );
+    var ne = document.getElementById("f-name");
+    document.getElementById("f-emoji").addEventListener("click", function(ev){
+      var b = ev.target.closest("[data-emoji]"); if (!b) return;
+      form.emoji = b.getAttribute("data-emoji");
+      this.querySelectorAll(".opt").forEach(function(o){ o.classList.toggle("sel", o===b); });
+    });
+    document.getElementById("f-color").addEventListener("click", function(ev){
+      var b = ev.target.closest("[data-color]"); if (!b) return;
+      form.color = b.getAttribute("data-color");
+      this.querySelectorAll(".col").forEach(function(o){ o.classList.toggle("sel", o===b); });
+    });
+    var wrap = document.getElementById("f-custom-wrap");
+    var cin = document.getElementById("f-custom");
+    document.getElementById("f-interval").addEventListener("click", function(ev){
+      var b = ev.target.closest("[data-int]"); if (!b) return;
+      var v = b.getAttribute("data-int");
+      this.querySelectorAll(".seg").forEach(function(o){ o.classList.toggle("sel", o===b); });
+      if (v === "custom"){
+        form.custom = true;
+        wrap.style.display = "";
+        setTimeout(function(){ cin.focus(); }, 40);
+      } else {
+        form.custom = false;
+        form.interval = +v;
+        wrap.style.display = "none";
+      }
+    });
+    setTimeout(function(){ if (!p) ne.focus(); }, 60);
+  }
+
+  function menuSheet(p){
+    openSheet(
+      '<h3>' + esc(p.name) + '</h3>' +
+      '<button class="list-item" data-act="water" data-id="' + p.id + '"><span class="ic">💧</span>水やりした（今日）</button>' +
+      '<button class="list-item" data-act="edit" data-id="' + p.id + '"><span class="ic">✏️</span>編集する</button>' +
+      '<button class="list-item danger" data-act="delete" data-id="' + p.id + '"><span class="ic">🗑️</span>削除する</button>'
+    );
+  }
+
+  function settingsSheet(){
+    var count = db.plants.length;
+    openSheet(
+      '<h3>設定</h3>' +
+      '<button class="list-item" data-act="export"><span class="ic">⬇️</span>データを書き出す (JSON)</button>' +
+      '<button class="list-item danger" data-act="wipe"><span class="ic">🗑️</span>すべてのデータを削除</button>' +
+      '<div class="about" style="margin-top:16px">' +
+        '<p><b>水やりメモ</b> ' + count + ' 株を登録中</p>' +
+        '<p>データはこの端末内にのみ保存され、外部へ送信されません。' +
+        '<a href="../../privacy-mizuyari-memo.html">プライバシーポリシー</a></p>' +
+        '<p style="opacity:.7">ver 1.0.0</p>' +
+      '</div>'
+    );
+  }
+
+  /* ---------- actions ---------- */
+  document.body.addEventListener("click", function(ev){
+    var el = ev.target.closest("[data-act]");
+    if (!el) return;
+    var act = el.getAttribute("data-act");
+    var id = el.getAttribute("data-id");
+    var p = id ? getPlant(id) : null;
+
+    switch(act){
+      case "add": plantForm("植物を追加"); break;
+      case "quick": {
+        var s = SUGGEST[+el.getAttribute("data-i")];
+        db.plants.push({ id: uid(), name: s.name, emoji: s.emoji, interval: s.interval, last: null, color: s.color });
+        save(); render();
+        break;
+      }
+      case "settings": settingsSheet(); break;
+      case "menu": menuSheet(p); break;
+      case "edit": plantForm("植物を編集", p); break;
+      case "close": closeSheet(); break;
+      case "water": {
+        if (p){
+          p.last = todayStr(); save();
+          if (overlay.classList.contains("on")) closeSheet();
+          render();
+          var btn = listEl.querySelector('[data-act="water"][data-id="' + p.id + '"]');
+          if (btn){ btn.classList.remove("pop"); void btn.offsetWidth; btn.classList.add("pop"); }
+        }
+        break;
+      }
+      case "save-add": {
+        var nm = (document.getElementById("f-name").value || "").trim();
+        if (!nm){ nm = "名前のない植物"; }
+        db.plants.push({ id: uid(), name: nm, emoji: form.emoji, interval: readInterval(), last: null, color: form.color });
+        save(); closeSheet(); render();
+        break;
+      }
+      case "save-edit": {
+        var name2 = (document.getElementById("f-name").value || "").trim();
+        if (p){ p.name = name2 || p.name; p.emoji = form.emoji; p.color = form.color; p.interval = readInterval(); save(); }
+        closeSheet(); render();
+        break;
+      }
+      case "delete": {
+        if (confirm("「" + (p ? p.name : "") + "」を削除します。よろしいですか？")){
+          db.plants = db.plants.filter(function(x){ return x.id !== id; });
+          save(); closeSheet(); render();
+        }
+        break;
+      }
+      case "export": {
+        var blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url; a.download = "mizuyari-backup-" + todayStr() + ".json";
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+        break;
+      }
+      case "wipe": {
+        if (confirm("すべての植物と記録を削除します。元に戻せません。よろしいですか？")){
+          db = { version: 1, plants: [] }; save(); closeSheet(); render();
+        }
+        break;
+      }
+    }
+  });
+
+  function readInterval(){
+    if (form.custom){
+      var cin = document.getElementById("f-custom");
+      var v = cin ? parseInt(cin.value, 10) : NaN;
+      if (isNaN(v) || v < 1) v = form.interval > 0 ? form.interval : 7;
+      if (v > 365) v = 365;
+      return v;
+    }
+    return form.interval > 0 ? form.interval : 7;
+  }
+
+  /* ---------- boot ---------- */
+  render();
+
+  if ("serviceWorker" in navigator){
+    window.addEventListener("load", function(){
+      navigator.serviceWorker.register("sw.js").catch(function(){});
+    });
+  }
+
+  // expose pure helpers for optional testing
+  window.__mizuyari = { addDays: addDays, diffDays: diffDays, statusOf: statusOf, todayStr: todayStr };
+})();
+</script>
+</body>
+</html>

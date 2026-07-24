@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>賞味期限メモ</title>
+<meta name="description" content="食品の賞味期限を登録して、期限切れ・期限間近を色分けで見える化するメモ。会員登録不要・完全ローカル保存。">
+<meta name="theme-color" content="#f97316" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="賞味期限">
+<style>
+  :root{
+    --accent:#f97316; --accent2:#ea580c;
+    --bg:#f4f6f8; --surface:#ffffff; --surface2:#f8fafc;
+    --text:#0f172a; --muted:#64748b; --line:#e6e9ee; --empty:#eceff3;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+    --danger:#ef4444;
+    --b-red-bg:#fee2e2; --b-red-fg:#dc2626;
+    --b-org-bg:#ffedd5; --b-org-fg:#ea580c;
+    --b-grn-bg:#dcfce7; --b-grn-fg:#16a34a;
+    --b-gray-bg:#eceff3; --b-gray-fg:#64748b;
+    --safe-t:env(safe-area-inset-top); --safe-b:env(safe-area-inset-bottom);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0b1220; --surface:#131c2b; --surface2:#0f1826;
+      --text:#e7ecf3; --muted:#94a3b8; --line:#25324a; --empty:#1b2536;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+      --b-red-bg:rgba(239,68,68,.18); --b-red-fg:#f87171;
+      --b-org-bg:rgba(249,115,22,.18); --b-org-fg:#fb923c;
+      --b-grn-bg:rgba(34,197,94,.18); --b-grn-fg:#4ade80;
+      --b-gray-bg:#1b2536; --b-gray-fg:#94a3b8;
+    }
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI",Meiryo,system-ui,sans-serif;
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;color:inherit;cursor:pointer}
+  .app{max-width:520px;margin:0 auto;min-height:100vh;padding:0 16px calc(96px + var(--safe-b))}
+  /* header */
+  header{
+    position:sticky;top:0;z-index:20;background:var(--bg);
+    padding:calc(12px + var(--safe-t)) 0 10px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .brand .logo{width:34px;height:34px;border-radius:9px;flex:0 0 auto;box-shadow:0 2px 6px rgba(234,88,12,.35)}
+  .brand h1{font-size:19px;margin:0;font-weight:800;letter-spacing:.01em;white-space:nowrap}
+  .icon-btn{
+    width:40px;height:40px;border:none;border-radius:12px;background:var(--surface);
+    box-shadow:var(--shadow);display:grid;place-items:center;font-size:19px;flex:0 0 auto
+  }
+  .icon-btn:active{transform:scale(.94)}
+  /* summary */
+  .summary{
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#fff;border-radius:18px;padding:16px 18px;margin:4px 0 16px;
+    box-shadow:0 8px 22px rgba(234,88,12,.28);position:relative;overflow:hidden
+  }
+  .summary .date{font-size:12.5px;opacity:.9;font-weight:600}
+  .summary .big{font-size:21px;font-weight:800;margin-top:3px}
+  .summary .sub{font-size:13px;opacity:.92;margin-top:3px}
+  /* list item */
+  .item{
+    width:100%;text-align:left;display:flex;align-items:center;gap:12px;
+    background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    padding:14px 14px;margin-bottom:10px;box-shadow:var(--shadow)
+  }
+  .item:active{transform:scale(.985)}
+  .item .main{flex:1;min-width:0}
+  .item .name{font-weight:700;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .item .date{font-size:12.5px;color:var(--muted);font-weight:600;margin-top:2px}
+  .badge{
+    flex:0 0 auto;border-radius:99px;padding:6px 12px;font-size:12.5px;font-weight:800;
+    white-space:nowrap;text-align:center;min-width:62px
+  }
+  .badge.red{background:var(--b-red-bg);color:var(--b-red-fg)}
+  .badge.org{background:var(--b-org-bg);color:var(--b-org-fg)}
+  .badge.grn{background:var(--b-grn-bg);color:var(--b-grn-fg)}
+  .badge.gray{background:var(--b-gray-bg);color:var(--b-gray-fg)}
+  /* empty state */
+  .empty-state{text-align:center;padding:26px 10px 8px;color:var(--muted)}
+  .empty-state .em{font-size:44px}
+  .empty-state h2{color:var(--text);font-size:17px;margin:10px 0 4px}
+  .empty-state p{font-size:13.5px;margin:0 auto;max-width:290px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
+  .chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:9px 15px;font-size:13.5px;font-weight:700;box-shadow:var(--shadow)}
+  .chip:active{transform:scale(.96)}
+  /* FAB */
+  .fab{
+    position:fixed;right:calc(16px + env(safe-area-inset-right));bottom:calc(18px + var(--safe-b));
+    z-index:30;border:none;border-radius:99px;padding:14px 20px;font-size:15px;font-weight:800;color:#fff;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    box-shadow:0 10px 26px rgba(234,88,12,.45);display:flex;align-items:center;gap:7px
+  }
+  .fab:active{transform:scale(.96)}
+  .fab .plus{font-size:20px;line-height:1;margin-top:-1px}
+  /* overlay + sheet */
+  .overlay{
+    position:fixed;inset:0;z-index:50;background:rgba(9,14,24,.5);
+    display:flex;align-items:flex-end;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity .2s ease;backdrop-filter:blur(2px)
+  }
+  .overlay.on{opacity:1;pointer-events:auto}
+  .sheet{
+    width:100%;max-width:520px;background:var(--surface);
+    border-radius:22px 22px 0 0;padding:8px 18px calc(20px + var(--safe-b));
+    box-shadow:0 -10px 40px rgba(0,0,0,.25);transform:translateY(20px);transition:transform .22s ease;
+    max-height:92vh;overflow:auto
+  }
+  .overlay.on .sheet{transform:translateY(0)}
+  .grip{width:38px;height:4px;border-radius:99px;background:var(--line);margin:6px auto 12px}
+  .sheet h3{margin:2px 0 14px;font-size:18px;font-weight:800}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:7px}
+  .field input[type=text],.field input[type=date]{
+    width:100%;border:1.5px solid var(--line);background:var(--surface2);color:var(--text);
+    border-radius:12px;padding:12px 14px;font-size:16px;outline:none
+  }
+  .field input[type=text]:focus,.field input[type=date]:focus{border-color:var(--accent)}
+  .row{display:flex;gap:10px;margin-top:6px}
+  .btn{flex:1;border:none;border-radius:13px;padding:14px;font-size:15.5px;font-weight:800}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 8px 20px rgba(234,88,12,.35)}
+  .btn.ghost{background:var(--empty);color:var(--text)}
+  .btn.danger{background:transparent;color:var(--danger);border:1.5px solid var(--danger)}
+  .btn:active{transform:scale(.97)}
+  .sheet .list-item{
+    display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:none;background:transparent;
+    padding:14px 4px;font-size:15px;font-weight:600;border-bottom:1px solid var(--line)
+  }
+  .sheet .list-item:last-child{border-bottom:none}
+  .sheet .list-item .ic{font-size:19px;width:24px;text-align:center}
+  .sheet .list-item.danger{color:var(--danger)}
+  .about{font-size:12.5px;color:var(--muted);line-height:1.7}
+  .about a{color:var(--accent);font-weight:700;text-decoration:none}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <img class="logo" src="icon-192.png" alt="" width="34" height="34">
+      <h1>賞味期限メモ</h1>
+    </div>
+    <button class="icon-btn" data-act="settings" aria-label="設定">⚙️</button>
+  </header>
+  <div id="summary"></div>
+  <main id="list" aria-live="polite"></main>
+</div>
+
+<button class="fab" data-act="add"><span class="plus">＋</span>追加</button>
+<div class="overlay" id="overlay"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY = "kigen.v1";
+  var WD = ["日","月","火","水","木","金","土"];
+  var CHIPS = ["牛乳","卵","ヨーグルト","豆腐","ハム","ドレッシング"];
+
+  /* ---------- date helpers (local, no UTC drift) ---------- */
+  function pad(n){ return n < 10 ? "0" + n : "" + n; }
+  function todayStr(){
+    var d = new Date();
+    return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+  }
+  function parse(s){ var a = s.split("-"); return new Date(+a[0], +a[1]-1, +a[2]); }
+  function addDays(s, delta){
+    var d = parse(s); d.setDate(d.getDate() + delta);
+    return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+  }
+  function daysUntil(ds, today){
+    return Math.round((parse(ds) - parse(today)) / 86400000);
+  }
+  function fmtDate(ds){
+    var d = parse(ds);
+    return (d.getMonth()+1) + "月" + d.getDate() + "日(" + WD[d.getDay()] + ")";
+  }
+
+  /* badge/status for an item relative to today */
+  function statusOf(item, today){
+    if (!item.date){ return { cls:"gray", label:"日付を設定", bucket:"none" }; }
+    var diff = daysUntil(item.date, today);
+    if (diff < 0)  return { cls:"red", label:"期限切れ", bucket:"expired", diff:diff };
+    if (diff === 0) return { cls:"org", label:"今日まで", bucket:"soon", diff:diff };
+    if (diff <= 3) return { cls:"org", label:"あと" + diff + "日", bucket:"soon", diff:diff };
+    return { cls:"grn", label:"あと" + diff + "日", bucket:"ok", diff:diff };
+  }
+
+  /* ---------- storage ---------- */
+  var db = load();
+  function load(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if (raw){ var o = JSON.parse(raw); if (o && o.items) return o; }
+    }catch(e){}
+    return { version: 1, items: [] };
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){} }
+  function uid(){ return "k" + Date.now().toString(36) + Math.floor(Math.random()*1e5).toString(36); }
+  function getItem(id){ for (var i=0;i<db.items.length;i++){ if (db.items[i].id===id) return db.items[i]; } return null; }
+
+  /* items sorted for display: undated first (need attention), then date ascending */
+  function sortedItems(){
+    return db.items.slice().sort(function(a,b){
+      if (!a.date && !b.date) return (a.createdAt||"") < (b.createdAt||"") ? -1 : 1;
+      if (!a.date) return -1;
+      if (!b.date) return 1;
+      if (a.date === b.date) return 0;
+      return a.date < b.date ? -1 : 1;
+    });
+  }
+
+  /* ---------- rendering ---------- */
+  var listEl = document.getElementById("list");
+  var sumEl = document.getElementById("summary");
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+
+  function render(){
+    renderSummary();
+    renderList();
+  }
+
+  function renderSummary(){
+    var total = db.items.length;
+    if (total === 0){ sumEl.innerHTML = ""; return; }
+    var t = todayStr();
+    var expired = 0, soon = 0;
+    for (var i=0;i<total;i++){
+      var st = statusOf(db.items[i], t);
+      if (st.bucket === "expired") expired++;
+      else if (st.bucket === "soon") soon++;
+    }
+    var d = new Date();
+    var dateLabel = (d.getMonth()+1) + "月" + d.getDate() + "日(" + WD[d.getDay()] + ") 現在";
+    var msg = expired > 0 ? "早めに使い切りましょう"
+            : soon > 0 ? "もうすぐ期限のものがあります"
+            : "期限に余裕があります";
+    sumEl.innerHTML =
+      '<div class="summary">' +
+        '<div class="date">' + dateLabel + '</div>' +
+        '<div class="big">期限切れ ' + expired + ' ・ 3日以内 ' + soon + '</div>' +
+        '<div class="sub">登録 ' + total + ' 件 / ' + msg + '</div>' +
+      '</div>';
+  }
+
+  function renderList(){
+    if (db.items.length === 0){
+      listEl.innerHTML =
+        '<div class="empty-state">' +
+          '<div class="em">🥬</div>' +
+          '<h2>賞味期限を記録しよう</h2>' +
+          '<p>食品名をタップで追加して、あとから日付を設定できます。右下の「＋追加」からも登録できます。</p>' +
+          '<div class="chips">' +
+            CHIPS.map(function(n,i){ return '<button class="chip" data-act="quick" data-i="' + i + '">' + esc(n) + '</button>'; }).join("") +
+          '</div>' +
+        '</div>';
+      return;
+    }
+    var t = todayStr();
+    var arr = sortedItems();
+    var html = "";
+    for (var i=0;i<arr.length;i++){
+      var it = arr[i];
+      var st = statusOf(it, t);
+      var dateTxt = it.date ? fmtDate(it.date) : "日付が未設定です";
+      html +=
+        '<button class="item" data-act="edit" data-id="' + it.id + '">' +
+          '<span class="main">' +
+            '<span class="name">' + esc(it.name) + '</span>' +
+            '<span class="date">' + dateTxt + '</span>' +
+          '</span>' +
+          '<span class="badge ' + st.cls + '">' + st.label + '</span>' +
+        '</button>';
+    }
+    listEl.innerHTML = html;
+  }
+
+  /* ---------- modal plumbing ---------- */
+  var overlay = document.getElementById("overlay");
+  var sheet = document.getElementById("sheet");
+  function openSheet(html){ sheet.innerHTML = '<div class="grip"></div>' + html; overlay.classList.add("on"); }
+  function closeSheet(){ overlay.classList.remove("on"); }
+  overlay.addEventListener("click", function(e){ if (e.target === overlay) closeSheet(); });
+
+  function itemForm(title, it){
+    var name = it ? it.name : "";
+    var date = it ? (it.date || "") : todayStr();
+    openSheet(
+      '<h3>' + title + '</h3>' +
+      '<div class="field"><label>食品名</label>' +
+        '<input type="text" id="f-name" maxlength="30" placeholder="例：牛乳" value="' + esc(name) + '"></div>' +
+      '<div class="field"><label>賞味期限</label>' +
+        '<input type="date" id="f-date" value="' + esc(date) + '"></div>' +
+      '<div class="row">' +
+        '<button class="btn ghost" data-act="close">キャンセル</button>' +
+        '<button class="btn primary" data-act="' + (it ? "save-edit" : "save-add") + '" data-id="' + (it ? it.id : "") + '">保存</button>' +
+      '</div>' +
+      (it ? '<div class="row"><button class="btn danger" data-act="delete" data-id="' + it.id + '">削除</button></div>' : "")
+    );
+    var ne = document.getElementById("f-name");
+    setTimeout(function(){ if (!it) ne.focus(); }, 60);
+  }
+
+  function settingsSheet(){
+    var count = db.items.length;
+    openSheet(
+      '<h3>設定</h3>' +
+      '<button class="list-item" data-act="export"><span class="ic">⬇️</span>データを書き出す (JSON)</button>' +
+      '<button class="list-item danger" data-act="wipe"><span class="ic">🗑️</span>すべてのデータを削除</button>' +
+      '<div class="about" style="margin-top:16px">' +
+        '<p><b>賞味期限メモ</b> ' + count + ' 件を登録中</p>' +
+        '<p>データはこの端末内にのみ保存され、外部へ送信されません。' +
+        '<a href="../../privacy-kigen-memo.html">プライバシーポリシー</a></p>' +
+        '<p style="opacity:.7">ver 1.0.0</p>' +
+      '</div>'
+    );
+  }
+
+  /* ---------- actions ---------- */
+  document.body.addEventListener("click", function(ev){
+    var el = ev.target.closest("[data-act]");
+    if (!el) return;
+    var act = el.getAttribute("data-act");
+    var id = el.getAttribute("data-id");
+    var it = id ? getItem(id) : null;
+
+    switch(act){
+      case "add": itemForm("賞味期限を追加"); break;
+      case "quick": {
+        var nm = CHIPS[+el.getAttribute("data-i")];
+        db.items.push({ id: uid(), name: nm, date: "", createdAt: todayStr() });
+        save(); render();
+        break;
+      }
+      case "settings": settingsSheet(); break;
+      case "edit": itemForm("編集", it); break;
+      case "close": closeSheet(); break;
+      case "save-add": {
+        var an = (document.getElementById("f-name").value || "").trim();
+        var ad = document.getElementById("f-date").value || "";
+        if (!an){ an = "無題"; }
+        db.items.push({ id: uid(), name: an, date: ad, createdAt: todayStr() });
+        save(); closeSheet(); render();
+        break;
+      }
+      case "save-edit": {
+        var en = (document.getElementById("f-name").value || "").trim();
+        var ed = document.getElementById("f-date").value || "";
+        if (it){ it.name = en || it.name; it.date = ed; save(); }
+        closeSheet(); render();
+        break;
+      }
+      case "delete": {
+        if (confirm("「" + (it ? it.name : "") + "」を削除します。よろしいですか？")){
+          db.items = db.items.filter(function(x){ return x.id !== id; });
+          save(); closeSheet(); render();
+        }
+        break;
+      }
+      case "export": {
+        var blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url; a.download = "kigen-backup-" + todayStr() + ".json";
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+        break;
+      }
+      case "wipe": {
+        if (confirm("すべてのデータを削除します。元に戻せません。よろしいですか？")){
+          db = { version: 1, items: [] }; save(); closeSheet(); render();
+        }
+        break;
+      }
+    }
+  });
+
+  /* ---------- boot ---------- */
+  render();
+
+  if ("serviceWorker" in navigator){
+    window.addEventListener("load", function(){
+      navigator.serviceWorker.register("sw.js").catch(function(){});
+    });
+  }
+
+  window.__kigen = { addDays: addDays, daysUntil: daysUntil, statusOf: statusOf, todayStr: todayStr };
+})();
+</script>
+</body>
+</html>

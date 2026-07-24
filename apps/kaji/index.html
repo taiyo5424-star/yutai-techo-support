@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>家事ローテ</title>
+<meta name="description" content="定期的な家事の前回実施日から次のタイミングを見える化するローテーション管理。会員登録不要・完全ローカル保存。">
+<meta name="theme-color" content="#06b6d4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="家事ローテ">
+<style>
+  :root{
+    --accent:#06b6d4; --accent2:#0891b2;
+    --bg:#f4f6f8; --surface:#ffffff; --surface2:#f8fafc;
+    --text:#0f172a; --muted:#64748b; --line:#e6e9ee; --empty:#eceff3;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+    --danger:#ef4444; --warn:#f59e0b; --ok:#22c55e;
+    --safe-t:env(safe-area-inset-top); --safe-b:env(safe-area-inset-bottom);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0b1220; --surface:#131c2b; --surface2:#0f1826;
+      --text:#e7ecf3; --muted:#94a3b8; --line:#25324a; --empty:#1b2536;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI",Meiryo,system-ui,sans-serif;
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;color:inherit;cursor:pointer}
+  .app{max-width:520px;margin:0 auto;min-height:100vh;padding:0 16px calc(96px + var(--safe-b))}
+  /* header */
+  header{
+    position:sticky;top:0;z-index:20;background:var(--bg);
+    padding:calc(12px + var(--safe-t)) 0 10px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .brand .logo{width:34px;height:34px;border-radius:9px;flex:0 0 auto;box-shadow:0 2px 6px rgba(6,182,212,.35)}
+  .brand h1{font-size:19px;margin:0;font-weight:800;letter-spacing:.01em;white-space:nowrap}
+  .icon-btn{
+    width:40px;height:40px;border:none;border-radius:12px;background:var(--surface);
+    box-shadow:var(--shadow);display:grid;place-items:center;font-size:19px;flex:0 0 auto
+  }
+  .icon-btn:active{transform:scale(.94)}
+  /* today summary */
+  .summary{
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#fff;border-radius:18px;padding:16px 18px;margin:4px 0 16px;
+    box-shadow:0 8px 22px rgba(6,182,212,.28);position:relative;overflow:hidden
+  }
+  .summary .date{font-size:12.5px;opacity:.9;font-weight:600}
+  .summary .big{font-size:22px;font-weight:800;margin-top:2px}
+  .summary .sub{font-size:13px;opacity:.92;margin-top:2px}
+  .bar{height:8px;border-radius:99px;background:rgba(255,255,255,.28);margin-top:12px;overflow:hidden}
+  .bar > i{display:block;height:100%;background:#fff;border-radius:99px;transition:width .35s ease}
+  /* chore card */
+  .card{
+    background:var(--surface);border-radius:18px;padding:14px 14px 14px;margin-bottom:12px;
+    box-shadow:var(--shadow);border:1px solid var(--line);position:relative
+  }
+  .card.hot{border-color:rgba(239,68,68,.5)}
+  .card .top{display:flex;align-items:flex-start;gap:10px}
+  .swatch{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px;flex:0 0 auto}
+  .cmain{flex:1;min-width:0}
+  .card .name{font-weight:700;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .status{display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap}
+  .badge{font-size:11.5px;font-weight:800;padding:2px 9px;border-radius:99px;color:#fff;white-space:nowrap}
+  .b-over,.b-due,.b-undone{background:var(--danger)}
+  .b-soon{background:var(--warn)}
+  .b-ok{background:var(--empty);color:var(--muted)}
+  .sub2{font-size:12px;color:var(--muted);font-weight:600}
+  .menu-btn{border:none;background:transparent;font-size:20px;color:var(--muted);width:34px;height:34px;border-radius:9px;flex:0 0 auto}
+  .menu-btn:active{background:var(--empty)}
+  .pbar{height:9px;border-radius:99px;background:var(--empty);margin-top:12px;overflow:hidden}
+  .pbar > i{display:block;height:100%;border-radius:99px;transition:width .35s ease}
+  .didbtn{
+    width:100%;margin-top:12px;border:none;border-radius:14px;padding:14px;font-size:16px;font-weight:800;color:#fff;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 8px 20px rgba(6,182,212,.32)
+  }
+  .didbtn:active{transform:scale(.98)}
+  .didbtn.done{background:var(--empty);color:var(--muted);box-shadow:none}
+  /* empty state */
+  .empty-state{text-align:center;padding:26px 10px 8px;color:var(--muted)}
+  .empty-state .em{font-size:44px}
+  .empty-state h2{color:var(--text);font-size:17px;margin:10px 0 4px}
+  .empty-state p{font-size:13.5px;margin:0 auto;max-width:280px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
+  .chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:8px 14px;font-size:13px;font-weight:600;box-shadow:var(--shadow)}
+  .chip:active{transform:scale(.96)}
+  /* FAB */
+  .fab{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + var(--safe-b));
+    z-index:30;border:none;border-radius:99px;padding:14px 22px;font-size:15px;font-weight:800;color:#fff;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    box-shadow:0 10px 26px rgba(6,182,212,.45);display:flex;align-items:center;gap:8px
+  }
+  .fab:active{transform:translateX(-50%) scale(.96)}
+  .fab .plus{font-size:20px;line-height:1;margin-top:-1px}
+  /* overlay + sheet */
+  .overlay{
+    position:fixed;inset:0;z-index:50;background:rgba(9,14,24,.5);
+    display:flex;align-items:flex-end;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity .2s ease;backdrop-filter:blur(2px)
+  }
+  .overlay.on{opacity:1;pointer-events:auto}
+  .sheet{
+    width:100%;max-width:520px;background:var(--surface);
+    border-radius:22px 22px 0 0;padding:8px 18px calc(20px + var(--safe-b));
+    box-shadow:0 -10px 40px rgba(0,0,0,.25);transform:translateY(20px);transition:transform .22s ease;
+    max-height:92vh;overflow:auto
+  }
+  .overlay.on .sheet{transform:translateY(0)}
+  .grip{width:38px;height:4px;border-radius:99px;background:var(--line);margin:6px auto 12px}
+  .sheet h3{margin:2px 0 14px;font-size:18px;font-weight:800}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:7px}
+  .field input[type=text],.field input[type=number]{
+    width:100%;border:1.5px solid var(--line);background:var(--surface2);color:var(--text);
+    border-radius:12px;padding:12px 14px;font-size:16px;outline:none
+  }
+  .field input[type=number]{width:120px}
+  .field input:focus{border-color:var(--accent)}
+  .pick{display:flex;flex-wrap:wrap;gap:8px}
+  .pick .opt{
+    width:44px;height:44px;border-radius:12px;border:2px solid transparent;background:var(--surface2);
+    display:grid;place-items:center;font-size:20px
+  }
+  .pick .opt.sel{border-color:var(--text)}
+  .pick .col{width:36px;height:36px;border-radius:50%;border:3px solid transparent}
+  .pick .col.sel{border-color:var(--text)}
+  .seg{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .seg .opt{
+    min-width:52px;height:44px;padding:0 14px;border-radius:12px;border:2px solid transparent;background:var(--surface2);
+    display:grid;place-items:center;font-size:14px;font-weight:700
+  }
+  .seg .opt.sel{border-color:var(--text)}
+  .custom-int{display:flex;align-items:center;gap:8px;margin-top:10px}
+  .custom-int span{font-size:13px;color:var(--muted);font-weight:600}
+  .row{display:flex;gap:10px;margin-top:6px}
+  .btn{flex:1;border:none;border-radius:13px;padding:14px;font-size:15.5px;font-weight:800}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 8px 20px rgba(6,182,212,.35)}
+  .btn.ghost{background:var(--empty);color:var(--text)}
+  .btn.danger{background:transparent;color:var(--danger);border:1.5px solid var(--danger)}
+  .btn:active{transform:scale(.97)}
+  .sheet .list-item{
+    display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:none;background:transparent;
+    padding:14px 4px;font-size:15px;font-weight:600;border-bottom:1px solid var(--line)
+  }
+  .sheet .list-item:last-child{border-bottom:none}
+  .sheet .list-item .ic{font-size:19px;width:24px;text-align:center}
+  .sheet .list-item.danger{color:var(--danger)}
+  .about{font-size:12.5px;color:var(--muted);line-height:1.7}
+  .about a{color:var(--accent);font-weight:700;text-decoration:none}
+  .pop{animation:pop .28s ease}
+  @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <img class="logo" src="icon-192.png" alt="" width="34" height="34">
+      <h1>家事ローテ</h1>
+    </div>
+    <button class="icon-btn" data-act="settings" aria-label="設定">⚙️</button>
+  </header>
+  <div id="summary"></div>
+  <main id="list" aria-live="polite"></main>
+</div>
+
+<button class="fab" data-act="add"><span class="plus">＋</span>家事を追加</button>
+<div class="overlay" id="overlay"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY = "kaji.v1";
+  var WD = ["日","月","火","水","木","金","土"];
+  var EMOJIS = ["🧹","🚽","🛁","🍽️","🧺","🪟","🚗","🌀","🗑️"];
+  var COLORS = ["#06b6d4","#3b82f6","#8b5cf6","#ef4444","#f59e0b","#22c55e","#ec4899","#64748b"];
+  var PRESETS = [
+    {label:"毎日",v:1},
+    {label:"3日",v:3},
+    {label:"週1",v:7},
+    {label:"2週",v:14},
+    {label:"月1",v:30}
+  ];
+  var SUGGEST = [
+    {name:"トイレ掃除",emoji:"🚽",interval:7,color:"#06b6d4"},
+    {name:"シーツ交換",emoji:"🧺",interval:14,color:"#8b5cf6"},
+    {name:"換気扇",emoji:"🌀",interval:30,color:"#3b82f6"},
+    {name:"排水口",emoji:"🛁",interval:7,color:"#22c55e"},
+    {name:"玄関掃除",emoji:"🧹",interval:7,color:"#f59e0b"}
+  ];
+
+  /* ---------- pure date helpers ---------- */
+  function pad(n){ return n < 10 ? "0" + n : "" + n; }
+  function todayStr(){
+    var d = new Date();
+    return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+  }
+  function parse(s){ var a = s.split("-"); return new Date(+a[0], +a[1]-1, +a[2]); }
+  function daysBetween(a, b){ return Math.round((parse(b) - parse(a)) / 86400000); }
+
+  /* ---------- chore status ---------- */
+  function normInterval(c){ return c.interval > 0 ? c.interval : 1; }
+  function info(c, t){
+    var interval = normInterval(c);
+    if (c.last == null){
+      return { state:"undone", elapsed:0, remaining:0, over:0, pct:100, interval:interval };
+    }
+    var elapsed = Math.max(0, daysBetween(c.last, t));
+    var remaining = interval - elapsed;
+    var over = elapsed - interval;
+    var pct = Math.min(100, Math.round(elapsed / interval * 100));
+    var soonWin = Math.max(1, Math.ceil(interval * 0.2));
+    var state = over > 0 ? "over"
+              : (remaining === 0 ? "due"
+              : (remaining <= soonWin ? "soon" : "ok"));
+    return { state:state, elapsed:elapsed, remaining:remaining, over:over, pct:pct, interval:interval };
+  }
+  function isDue(st){ return st.state === "undone" || st.state === "over" || st.state === "due"; }
+  function sortKey(c, t){
+    if (c.last == null) return -0.5;
+    var st = info(c, t);
+    return st.remaining; // negative = overdue = most urgent first
+  }
+
+  /* ---------- storage ---------- */
+  var db = load();
+  function load(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if (raw){ var o = JSON.parse(raw); if (o && o.chores) return o; }
+    }catch(e){}
+    return { version: 1, chores: [] };
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){} }
+  function uid(){ return "c" + Date.now().toString(36) + Math.floor(Math.random()*1e5).toString(36); }
+  function getChore(id){ for (var i=0;i<db.chores.length;i++){ if (db.chores[i].id===id) return db.chores[i]; } return null; }
+
+  /* ---------- rendering ---------- */
+  var listEl = document.getElementById("list");
+  var sumEl = document.getElementById("summary");
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+
+  function render(){
+    renderSummary();
+    renderList();
+  }
+
+  function renderSummary(){
+    var t = todayStr();
+    var total = db.chores.length;
+    if (total === 0){ sumEl.innerHTML = ""; return; }
+    var d = new Date();
+    var dateLabel = (d.getMonth()+1) + "月" + d.getDate() + "日(" + WD[d.getDay()] + ")";
+    var due = 0, over = 0, undone = 0;
+    for (var i=0;i<total;i++){
+      var st = info(db.chores[i], t);
+      if (isDue(st)) due++;
+      if (st.state === "over") over++;
+      if (st.state === "undone") undone++;
+    }
+    var pct = Math.round((total - due) / total * 100);
+    var msg;
+    if (due === 0){ msg = "ぜんぶ順調です。おつかれさま🎉"; }
+    else {
+      var parts = [];
+      if (over > 0) parts.push("超過 " + over + "件");
+      if (undone > 0) parts.push("未実施 " + undone + "件");
+      msg = parts.length ? parts.join(" ・ ") : "今日が予定日です";
+    }
+    sumEl.innerHTML =
+      '<div class="summary">' +
+        '<div class="date">' + dateLabel + '</div>' +
+        '<div class="big">今やるべき ' + due + ' 件</div>' +
+        '<div class="sub">' + msg + '</div>' +
+        '<div class="bar"><i style="width:' + pct + '%"></i></div>' +
+      '</div>';
+  }
+
+  function badge(st){
+    if (st.state === "undone") return '<span class="badge b-undone">未実施</span>';
+    if (st.state === "over")   return '<span class="badge b-over">' + st.over + '日超過</span>';
+    if (st.state === "due")    return '<span class="badge b-due">今日が予定日</span>';
+    if (st.state === "soon")   return '<span class="badge b-soon">あと' + st.remaining + '日</span>';
+    return '<span class="badge b-ok">あと' + st.remaining + '日</span>';
+  }
+
+  function barColor(st){
+    if (st.state === "over" || st.state === "due" || st.state === "undone") return "var(--danger)";
+    if (st.state === "soon") return "var(--warn)";
+    return "var(--accent)";
+  }
+
+  function renderList(){
+    if (db.chores.length === 0){
+      listEl.innerHTML =
+        '<div class="empty-state">' +
+          '<div class="em">🧹</div>' +
+          '<h2>家事をひとつ、登録しよう</h2>' +
+          '<p>間隔を決めて「やった！」を押すだけ。次の予定を自動で教えます。</p>' +
+          '<div class="chips">' +
+            SUGGEST.map(function(s,i){ return '<button class="chip" data-act="quick" data-i="' + i + '">' + s.emoji + ' ' + esc(s.name) + '</button>'; }).join("") +
+          '</div>' +
+        '</div>';
+      return;
+    }
+    var t = todayStr();
+    var arr = db.chores.slice().sort(function(a,b){
+      var ka = sortKey(a, t), kb = sortKey(b, t);
+      if (ka !== kb) return ka - kb;
+      return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0);
+    });
+    var html = "";
+    for (var i=0;i<arr.length;i++){
+      var c = arr[i];
+      var st = info(c, t);
+      var done = c.last === t;
+      var sub2 = c.last == null
+        ? '<span class="sub2">間隔 ' + st.interval + '日</span>'
+        : '<span class="sub2">前回 ' + st.elapsed + '日前 ・ 間隔 ' + st.interval + '日</span>';
+      var btn = done
+        ? '<button class="didbtn done" data-act="undo" data-id="' + c.id + '">✓ 今日やりました（取り消す）</button>'
+        : '<button class="didbtn" data-act="did" data-id="' + c.id + '">やった！</button>';
+      html +=
+        '<section class="card' + (isDue(st) ? " hot" : "") + '" style="--c:' + c.color + '">' +
+          '<div class="top">' +
+            '<span class="swatch" style="background:' + c.color + '22">' + c.emoji + '</span>' +
+            '<div class="cmain">' +
+              '<div class="name">' + esc(c.name) + '</div>' +
+              '<div class="status">' + badge(st) + sub2 + '</div>' +
+            '</div>' +
+            '<button class="menu-btn" data-act="edit" data-id="' + c.id + '" aria-label="編集">⋯</button>' +
+          '</div>' +
+          '<div class="pbar"><i style="width:' + st.pct + '%;background:' + barColor(st) + '"></i></div>' +
+          btn +
+        '</section>';
+    }
+    listEl.innerHTML = html;
+  }
+
+  /* ---------- modal plumbing ---------- */
+  var overlay = document.getElementById("overlay");
+  var sheet = document.getElementById("sheet");
+  function openSheet(html){ sheet.innerHTML = '<div class="grip"></div>' + html; overlay.classList.add("on"); }
+  function closeSheet(){ overlay.classList.remove("on"); }
+  overlay.addEventListener("click", function(e){ if (e.target === overlay) closeSheet(); });
+
+  /* temp state for add/edit forms */
+  var form = { emoji: EMOJIS[0], color: COLORS[0], interval: 7 };
+
+  function isPreset(v){ for (var i=0;i<PRESETS.length;i++){ if (PRESETS[i].v === v) return true; } return false; }
+
+  function choreForm(title, c){
+    form.emoji = c ? c.emoji : EMOJIS[0];
+    form.color = c ? c.color : COLORS[0];
+    form.interval = c ? normInterval(c) : 7;
+    var name = c ? c.name : "";
+    openSheet(
+      '<h3>' + title + '</h3>' +
+      '<div class="field"><label>家事の名前</label>' +
+        '<input type="text" id="f-name" maxlength="24" placeholder="例：トイレ掃除" value="' + esc(name) + '"></div>' +
+      '<div class="field"><label>アイコン</label><div class="pick" id="f-emoji">' +
+        EMOJIS.map(function(e){ return '<button class="opt' + (e===form.emoji?" sel":"") + '" data-emoji="' + e + '">' + e + '</button>'; }).join("") +
+      '</div></div>' +
+      '<div class="field"><label>実施の間隔</label><div class="seg" id="f-int">' +
+        PRESETS.map(function(p){ return '<button class="opt' + (p.v===form.interval?" sel":"") + '" data-int="' + p.v + '">' + p.label + '</button>'; }).join("") +
+      '</div>' +
+        '<div class="custom-int"><span>自由入力</span>' +
+        '<input type="number" id="f-custom" min="1" max="365" inputmode="numeric" value="' + form.interval + '"><span>日ごと</span></div>' +
+      '</div>' +
+      '<div class="field"><label>カラー</label><div class="pick" id="f-color">' +
+        COLORS.map(function(col){ return '<button class="col' + (col===form.color?" sel":"") + '" style="background:' + col + '" data-color="' + col + '" aria-label="color"></button>'; }).join("") +
+      '</div></div>' +
+      '<div class="row">' +
+        '<button class="btn ghost" data-act="close">キャンセル</button>' +
+        '<button class="btn primary" data-act="' + (c ? "save-edit" : "save-add") + '" data-id="' + (c ? c.id : "") + '">保存</button>' +
+      '</div>' +
+      (c ? '<div class="row"><button class="btn danger" data-act="delete" data-id="' + c.id + '">この家事を削除</button></div>' : "")
+    );
+    var ne = document.getElementById("f-name");
+    document.getElementById("f-emoji").addEventListener("click", function(ev){
+      var b = ev.target.closest("[data-emoji]"); if (!b) return;
+      form.emoji = b.getAttribute("data-emoji");
+      this.querySelectorAll(".opt").forEach(function(o){ o.classList.toggle("sel", o===b); });
+    });
+    document.getElementById("f-color").addEventListener("click", function(ev){
+      var b = ev.target.closest("[data-color]"); if (!b) return;
+      form.color = b.getAttribute("data-color");
+      this.querySelectorAll(".col").forEach(function(o){ o.classList.toggle("sel", o===b); });
+    });
+    var intWrap = document.getElementById("f-int");
+    var customIn = document.getElementById("f-custom");
+    intWrap.addEventListener("click", function(ev){
+      var b = ev.target.closest("[data-int]"); if (!b) return;
+      form.interval = +b.getAttribute("data-int");
+      customIn.value = form.interval;
+      this.querySelectorAll(".opt").forEach(function(o){ o.classList.toggle("sel", +o.getAttribute("data-int")===form.interval); });
+    });
+    customIn.addEventListener("input", function(){
+      var v = parseInt(this.value, 10);
+      if (v > 0){ form.interval = v; }
+      intWrap.querySelectorAll(".opt").forEach(function(o){ o.classList.toggle("sel", +o.getAttribute("data-int")===form.interval); });
+    });
+    setTimeout(function(){ if (!c) ne.focus(); }, 60);
+  }
+
+  function settingsSheet(){
+    var count = db.chores.length;
+    var t = todayStr();
+    var due = 0;
+    db.chores.forEach(function(c){ if (isDue(info(c, t))) due++; });
+    openSheet(
+      '<h3>設定</h3>' +
+      '<button class="list-item" data-act="export"><span class="ic">⬇️</span>データを書き出す (JSON)</button>' +
+      '<button class="list-item danger" data-act="wipe"><span class="ic">🗑️</span>すべてのデータを削除</button>' +
+      '<div class="about" style="margin-top:16px">' +
+        '<p><b>家事ローテ</b> ' + count + ' 件の家事 / 今やるべき ' + due + ' 件</p>' +
+        '<p>データはこの端末内にのみ保存され、外部へ送信されません。' +
+        '<a href="../../privacy-kaji-rote.html">プライバシーポリシー</a></p>' +
+        '<p style="opacity:.7">ver 1.0.0</p>' +
+      '</div>'
+    );
+  }
+
+  /* ---------- actions ---------- */
+  document.body.addEventListener("click", function(ev){
+    var el = ev.target.closest("[data-act]");
+    if (!el) return;
+    var act = el.getAttribute("data-act");
+    var id = el.getAttribute("data-id");
+    var c = id ? getChore(id) : null;
+
+    switch(act){
+      case "add": choreForm("家事を追加"); break;
+      case "quick": {
+        var s = SUGGEST[+el.getAttribute("data-i")];
+        db.chores.push({ id: uid(), name: s.name, emoji: s.emoji, interval: s.interval, last: null, color: s.color });
+        save(); render();
+        break;
+      }
+      case "settings": settingsSheet(); break;
+      case "edit": choreForm("家事を編集", c); break;
+      case "close": closeSheet(); break;
+      case "did": {
+        if (c){ c.prevLast = (c.last === undefined ? null : c.last); c.last = todayStr(); save(); render(); }
+        break;
+      }
+      case "undo": {
+        if (c){ c.last = (c.prevLast !== undefined ? c.prevLast : null); delete c.prevLast; save(); render(); }
+        break;
+      }
+      case "save-add": {
+        var nm = (document.getElementById("f-name").value || "").trim();
+        if (!nm){ nm = "無題の家事"; }
+        var iv = form.interval > 0 ? form.interval : 1;
+        db.chores.push({ id: uid(), name: nm, emoji: form.emoji, interval: iv, last: null, color: form.color });
+        save(); closeSheet(); render();
+        break;
+      }
+      case "save-edit": {
+        var name2 = (document.getElementById("f-name").value || "").trim();
+        if (c){
+          c.name = name2 || c.name;
+          c.emoji = form.emoji;
+          c.color = form.color;
+          c.interval = form.interval > 0 ? form.interval : 1;
+          save();
+        }
+        closeSheet(); render();
+        break;
+      }
+      case "delete": {
+        if (confirm("「" + (c ? c.name : "") + "」を削除します。よろしいですか？")){
+          db.chores = db.chores.filter(function(x){ return x.id !== id; });
+          save(); closeSheet(); render();
+        }
+        break;
+      }
+      case "export": {
+        var blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url; a.download = "kaji-backup-" + todayStr() + ".json";
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+        break;
+      }
+      case "wipe": {
+        if (confirm("すべての家事データを削除します。元に戻せません。よろしいですか？")){
+          db = { version: 1, chores: [] }; save(); closeSheet(); render();
+        }
+        break;
+      }
+    }
+  });
+
+  /* ---------- boot ---------- */
+  render();
+
+  if ("serviceWorker" in navigator){
+    window.addEventListener("load", function(){
+      navigator.serviceWorker.register("sw.js").catch(function(){});
+    });
+  }
+
+  // expose pure helpers for optional testing
+  window.__kaji = { daysBetween: daysBetween, info: info, todayStr: todayStr };
+})();
+</script>
+</body>
+</html>

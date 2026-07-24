@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>かいかえメモ</title>
+<meta name="description" content="エアコンのフィルターやプリンターのインクなど、消耗品の型番・サイズ・購入先をメモして買い替え時にすぐ確認。会員登録不要・完全ローカル保存。">
+<meta name="theme-color" content="#64748b" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="かいかえ">
+<style>
+  :root{
+    --accent:#64748b; --accent2:#475569;
+    --bg:#f4f6f8; --surface:#ffffff; --surface2:#f8fafc;
+    --text:#0f172a; --muted:#64748b; --line:#e6e9ee; --empty:#eceff3;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+    --danger:#ef4444;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"DejaVu Sans Mono","Courier New",monospace;
+    --safe-t:env(safe-area-inset-top); --safe-b:env(safe-area-inset-bottom);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0b1220; --surface:#131c2b; --surface2:#0f1826;
+      --text:#e7ecf3; --muted:#94a3b8; --line:#25324a; --empty:#1b2536;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI",Meiryo,system-ui,sans-serif;
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;color:inherit;cursor:pointer}
+  .app{max-width:520px;margin:0 auto;min-height:100vh;padding:0 16px calc(96px + var(--safe-b))}
+  /* header */
+  header{
+    position:sticky;top:0;z-index:20;background:var(--bg);
+    padding:calc(12px + var(--safe-t)) 0 10px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .brand .logo{width:34px;height:34px;border-radius:9px;flex:0 0 auto;box-shadow:0 2px 6px rgba(71,85,105,.35)}
+  .brand h1{font-size:19px;margin:0;font-weight:800;letter-spacing:.01em;white-space:nowrap}
+  .icon-btn{
+    width:40px;height:40px;border:none;border-radius:12px;background:var(--surface);
+    box-shadow:var(--shadow);display:grid;place-items:center;font-size:19px;flex:0 0 auto
+  }
+  .icon-btn:active{transform:scale(.94)}
+  /* search */
+  .searchbar{position:relative;margin:2px 0 14px}
+  .searchbar input{
+    width:100%;border:1.5px solid var(--line);background:var(--surface);color:var(--text);
+    border-radius:14px;padding:12px 14px 12px 40px;font-size:16px;outline:none;box-shadow:var(--shadow)
+  }
+  .searchbar input:focus{border-color:var(--accent)}
+  .searchbar .si{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:15px;opacity:.55;pointer-events:none}
+  /* item card */
+  .item{
+    display:flex;align-items:center;gap:12px;background:var(--surface);
+    border:1px solid var(--line);border-radius:16px;padding:13px 14px;margin-bottom:10px;
+    box-shadow:var(--shadow);text-align:left
+  }
+  .item:active{transform:scale(.995)}
+  .item-body{flex:1;min-width:0}
+  .item-name{font-weight:700;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .item-model{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--text);margin-top:3px;word-break:break-all;line-height:1.35}
+  .item-model.none{color:var(--muted);font-weight:500;font-family:inherit;font-size:13px}
+  .item-spec{font-size:12px;color:var(--muted);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .copy-btn{
+    flex:0 0 auto;border:1px solid var(--line);background:var(--surface2);color:var(--accent);
+    border-radius:11px;padding:9px 12px;font-size:12.5px;font-weight:800;min-width:56px;min-height:44px;align-self:center
+  }
+  .copy-btn:active{transform:scale(.94);background:var(--empty)}
+  .copy-btn:disabled{opacity:.35}
+  /* empty state */
+  .empty-state{text-align:center;padding:26px 10px 8px;color:var(--muted)}
+  .empty-state .em{font-size:44px}
+  .empty-state h2{color:var(--text);font-size:17px;margin:10px 0 4px}
+  .empty-state p{font-size:13.5px;margin:0 auto;max-width:290px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
+  .chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:9px 14px;font-size:13px;font-weight:600;box-shadow:var(--shadow);min-height:40px}
+  .chip:active{transform:scale(.96)}
+  .no-match{text-align:center;color:var(--muted);padding:34px 10px;font-size:14px}
+  /* FAB */
+  .fab{
+    position:fixed;right:16px;bottom:calc(18px + var(--safe-b));
+    z-index:30;border:none;border-radius:99px;padding:14px 22px;font-size:15px;font-weight:800;color:#fff;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    box-shadow:0 10px 26px rgba(71,85,105,.45);display:flex;align-items:center;gap:8px
+  }
+  .fab:active{transform:scale(.96)}
+  .fab .plus{font-size:20px;line-height:1;margin-top:-1px}
+  /* toast */
+  .toast{
+    position:fixed;left:50%;bottom:calc(86px + var(--safe-b));transform:translateX(-50%) translateY(8px);
+    background:var(--text);color:var(--bg);padding:9px 16px;border-radius:99px;font-size:13px;font-weight:700;
+    opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;z-index:70;box-shadow:var(--shadow);white-space:nowrap
+  }
+  .toast.on{opacity:.96;transform:translateX(-50%) translateY(0)}
+  /* overlay + sheet */
+  .overlay{
+    position:fixed;inset:0;z-index:50;background:rgba(9,14,24,.5);
+    display:flex;align-items:flex-end;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity .2s ease;backdrop-filter:blur(2px)
+  }
+  .overlay.on{opacity:1;pointer-events:auto}
+  .sheet{
+    width:100%;max-width:520px;background:var(--surface);
+    border-radius:22px 22px 0 0;padding:8px 18px calc(20px + var(--safe-b));
+    box-shadow:0 -10px 40px rgba(0,0,0,.25);transform:translateY(20px);transition:transform .22s ease;
+    max-height:92vh;overflow:auto
+  }
+  .overlay.on .sheet{transform:translateY(0)}
+  .grip{width:38px;height:4px;border-radius:99px;background:var(--line);margin:6px auto 12px}
+  .sheet h3{margin:2px 0 14px;font-size:18px;font-weight:800}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:7px}
+  .field input[type=text],.field textarea{
+    width:100%;border:1.5px solid var(--line);background:var(--surface2);color:var(--text);
+    border-radius:12px;padding:12px 14px;font-size:16px;outline:none;font-family:inherit
+  }
+  .field input[type=text]:focus,.field textarea:focus{border-color:var(--accent)}
+  .field input.mono{font-family:var(--mono)}
+  .field textarea{resize:vertical;min-height:72px;line-height:1.5}
+  .row{display:flex;gap:10px;margin-top:6px}
+  .btn{flex:1;border:none;border-radius:13px;padding:14px;font-size:15.5px;font-weight:800}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 8px 20px rgba(71,85,105,.35)}
+  .btn.ghost{background:var(--empty);color:var(--text)}
+  .btn.danger{background:transparent;color:var(--danger);border:1.5px solid var(--danger)}
+  .btn:active{transform:scale(.97)}
+  .btn-wide{width:100%;margin-top:10px}
+  .sheet .list-item{
+    display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:none;background:transparent;
+    padding:14px 4px;font-size:15px;font-weight:600;border-bottom:1px solid var(--line)
+  }
+  .sheet .list-item:last-of-type{border-bottom:none}
+  .sheet .list-item .ic{font-size:19px;width:24px;text-align:center}
+  .sheet .list-item.danger{color:var(--danger)}
+  .about{font-size:12.5px;color:var(--muted);line-height:1.7}
+  .about a{color:var(--accent);font-weight:700;text-decoration:none}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <img class="logo" src="icon-192.png" alt="" width="34" height="34">
+      <h1>かいかえメモ</h1>
+    </div>
+    <button class="icon-btn" data-act="settings" aria-label="設定">⚙️</button>
+  </header>
+  <div class="searchbar">
+    <span class="si" aria-hidden="true">🔍</span>
+    <input type="search" id="q" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="用途・型番・規格で検索" aria-label="検索">
+  </div>
+  <main id="list" aria-live="polite"></main>
+</div>
+
+<button class="fab" data-act="add"><span class="plus">＋</span>追加</button>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="overlay" id="overlay"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY = "kaikae.v1";
+  var EXAMPLES = ["エアコンのフィルター","プリンターのインク","単4電池","シェーバー替刃","浄水器カートリッジ"];
+
+  /* ---------- pure date helpers ---------- */
+  function pad(n){ return n < 10 ? "0" + n : "" + n; }
+  function todayStr(){
+    var d = new Date();
+    return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+  }
+  function parse(s){ var a = s.split("-"); return new Date(+a[0], +a[1]-1, +a[2]); }
+  function addDays(s, delta){
+    var d = parse(s); d.setDate(d.getDate() + delta);
+    return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+  }
+
+  /* ---------- storage ---------- */
+  var db = load();
+  function load(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if (raw){ var o = JSON.parse(raw); if (o && o.items) return o; }
+    }catch(e){}
+    return { version: 1, items: [] };
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){} }
+  function uid(){ return "k" + Date.now().toString(36) + Math.floor(Math.random()*1e5).toString(36); }
+  function getItem(id){ for (var i=0;i<db.items.length;i++){ if (db.items[i].id===id) return db.items[i]; } return null; }
+
+  /* ---------- helpers ---------- */
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+
+  /* ---------- rendering ---------- */
+  var listEl = document.getElementById("list");
+  var qEl = document.getElementById("q");
+  var query = "";
+
+  function renderList(){
+    if (db.items.length === 0){
+      listEl.innerHTML =
+        '<div class="empty-state">' +
+          '<div class="em">🔖</div>' +
+          '<h2>買い替えの型番をメモ</h2>' +
+          '<p>フィルターやインク、電池など「次に買うとき困るもの」の型番・サイズ・購入先を残しておけます。</p>' +
+          '<div class="chips">' +
+            EXAMPLES.map(function(name,i){ return '<button class="chip" data-act="quick" data-i="' + i + '">' + esc(name) + '</button>'; }).join("") +
+          '</div>' +
+        '</div>';
+      return;
+    }
+    var q = query.trim().toLowerCase();
+    var items = db.items.slice().reverse();
+    if (q){
+      items = items.filter(function(it){
+        return ((it.name||"") + " " + (it.model||"") + " " + (it.spec||"")).toLowerCase().indexOf(q) >= 0;
+      });
+    }
+    if (items.length === 0){
+      listEl.innerHTML = '<div class="no-match">「' + esc(query.trim()) + '」に一致するメモはありません</div>';
+      return;
+    }
+    var html = "";
+    for (var i=0;i<items.length;i++){
+      var it = items[i];
+      var hasModel = !!(it.model && it.model.length);
+      var modelHtml = hasModel
+        ? '<div class="item-model">' + esc(it.model) + '</div>'
+        : '<div class="item-model none">型番 未登録</div>';
+      html +=
+        '<div class="item" data-act="edit" data-id="' + it.id + '">' +
+          '<div class="item-body">' +
+            '<div class="item-name">' + esc(it.name || "(名称なし)") + '</div>' +
+            modelHtml +
+            (it.spec ? '<div class="item-spec">' + esc(it.spec) + '</div>' : '') +
+          '</div>' +
+          '<button class="copy-btn" data-act="copy" data-id="' + it.id + '"' + (hasModel ? "" : " disabled") + ' aria-label="型番をコピー">コピー</button>' +
+        '</div>';
+    }
+    listEl.innerHTML = html;
+  }
+
+  /* ---------- toast ---------- */
+  var toastEl = document.getElementById("toast");
+  var toastTimer = null;
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add("on");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove("on"); }, 1400);
+  }
+
+  /* ---------- modal plumbing ---------- */
+  var overlay = document.getElementById("overlay");
+  var sheet = document.getElementById("sheet");
+  function openSheet(html){ sheet.innerHTML = '<div class="grip"></div>' + html; overlay.classList.add("on"); }
+  function closeSheet(){ overlay.classList.remove("on"); }
+  overlay.addEventListener("click", function(e){ if (e.target === overlay) closeSheet(); });
+
+  function fieldRow(id, label, value, ph, mono){
+    return '<div class="field"><label>' + label + '</label>' +
+      '<input type="text" id="' + id + '"' + (mono ? ' class="mono"' : '') +
+      ' placeholder="' + esc(ph) + '" value="' + esc(value || "") + '"></div>';
+  }
+
+  function itemForm(title, it, presetName){
+    var v = it || { name: presetName || "", model: "", spec: "", source: "", note: "" };
+    openSheet(
+      '<h3>' + title + '</h3>' +
+      fieldRow("f-name", "用途 / 機器", v.name, "例：エアコンのフィルター", false) +
+      fieldRow("f-model", "型番", v.model, "例：MAC-2360FT", true) +
+      fieldRow("f-spec", "サイズ / 規格", v.spec, "例：横32cm / 単4形", false) +
+      fieldRow("f-source", "購入先", v.source, "例：家電量販店 / ネット通販", false) +
+      '<div class="field"><label>メモ</label>' +
+        '<textarea id="f-note" placeholder="型番の場所、前回の交換日など">' + esc(v.note || "") + '</textarea></div>' +
+      '<div class="row">' +
+        '<button class="btn ghost" data-act="close">キャンセル</button>' +
+        '<button class="btn primary" data-act="' + (it ? "save-edit" : "save-add") + '" data-id="' + (it ? it.id : "") + '">保存</button>' +
+      '</div>' +
+      (it ? '<button class="btn danger btn-wide" data-act="delete" data-id="' + it.id + '">このメモを削除</button>' : "")
+    );
+    setTimeout(function(){
+      var f = document.getElementById("f-name");
+      if (f && !it){ f.focus(); }
+    }, 60);
+  }
+
+  function readForm(){
+    function val(id){ var el = document.getElementById(id); return el ? el.value.trim() : ""; }
+    return { name: val("f-name"), model: val("f-model"), spec: val("f-spec"), source: val("f-source"), note: val("f-note") };
+  }
+
+  function settingsSheet(){
+    var count = db.items.length;
+    openSheet(
+      '<h3>設定</h3>' +
+      '<button class="list-item" data-act="export"><span class="ic">⬇️</span>データを書き出す (JSON)</button>' +
+      '<button class="list-item danger" data-act="wipe"><span class="ic">🗑️</span>すべてのデータを削除</button>' +
+      '<div class="about" style="margin-top:16px">' +
+        '<p><b>かいかえメモ</b>　登録件数 ' + count + ' 件</p>' +
+        '<p>データはこの端末内にのみ保存され、外部へ送信されません。' +
+        '<a href="../../privacy-kaikae-memo.html">プライバシーポリシー</a></p>' +
+        '<p style="opacity:.7">ver 1.0.0</p>' +
+      '</div>'
+    );
+  }
+
+  /* ---------- events ---------- */
+  qEl.addEventListener("input", function(){ query = qEl.value; renderList(); });
+
+  document.body.addEventListener("click", function(ev){
+    var el = ev.target.closest("[data-act]");
+    if (!el) return;
+    var act = el.getAttribute("data-act");
+    var id = el.getAttribute("data-id");
+    var it = id ? getItem(id) : null;
+
+    switch(act){
+      case "add": itemForm("メモを追加"); break;
+      case "quick": itemForm("メモを追加", null, EXAMPLES[+el.getAttribute("data-i")]); break;
+      case "settings": settingsSheet(); break;
+      case "edit": if (it) itemForm("メモを編集", it); break;
+      case "close": closeSheet(); break;
+      case "copy": {
+        if (it && it.model && navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(it.model).then(function(){ toast("コピーしました"); }, function(){});
+        }
+        break;
+      }
+      case "save-add": {
+        var d = readForm();
+        if (!d.name && !d.model){ closeSheet(); break; }
+        if (!d.name) d.name = "(名称なし)";
+        db.items.push({ id: uid(), name: d.name, model: d.model, spec: d.spec, source: d.source, note: d.note, createdAt: todayStr() });
+        save(); closeSheet(); renderList();
+        break;
+      }
+      case "save-edit": {
+        if (it){
+          var e = readForm();
+          it.name = e.name || "(名称なし)";
+          it.model = e.model; it.spec = e.spec; it.source = e.source; it.note = e.note;
+          save();
+        }
+        closeSheet(); renderList();
+        break;
+      }
+      case "delete": {
+        if (it && confirm("「" + (it.name || "このメモ") + "」を削除します。よろしいですか？")){
+          db.items = db.items.filter(function(x){ return x.id !== id; });
+          save(); closeSheet(); renderList();
+        }
+        break;
+      }
+      case "export": {
+        var blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url; a.download = "kaikae-backup-" + todayStr() + ".json";
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+        break;
+      }
+      case "wipe": {
+        if (confirm("すべてのメモを削除します。元に戻せません。よろしいですか？")){
+          db = { version: 1, items: [] }; save(); closeSheet(); query = ""; qEl.value = ""; renderList();
+        }
+        break;
+      }
+    }
+  });
+
+  /* ---------- boot ---------- */
+  renderList();
+
+  if ("serviceWorker" in navigator){
+    window.addEventListener("load", function(){
+      navigator.serviceWorker.register("sw.js").catch(function(){});
+    });
+  }
+
+  window.__kaikae = { todayStr: todayStr, addDays: addDays };
+})();
+</script>
+</body>
+</html>
