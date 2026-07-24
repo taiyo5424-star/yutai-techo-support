@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e05572">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="ポイントやクーポンの有効期限を管理。失効前にお知らせします。">
+<title>ポイント期限メモ｜クーポン・ポイントの有効期限管理</title>
+<style>
+  :root{
+    --accent:#e05572; --accent-d:#c53f5c; --accent-soft:#fdecef;
+    --bg:#faf7f5; --card:#ffffff; --text:#2b2622; --sub:#8a827b;
+    --line:#eee6e0; --ok:#3fa66a; --warn:#e0952b; --danger:#d9534f;
+    --radius:16px; --shadow:0 2px 12px rgba(80,60,50,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#18140f; --card:#241e18; --text:#f2ece6; --sub:#a89f96;
+      --line:#372f27; --accent-soft:#3a1c23; --shadow:0 2px 12px rgba(0,0,0,.4);}
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    padding-bottom:env(safe-area-inset-bottom);-webkit-text-size-adjust:100%}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--accent),var(--accent-d));
+    color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  header .ico{font-size:24px;line-height:1}
+  header h1{font-size:18px;margin:0;font-weight:700;flex:1}
+  header button.gear{background:rgba(255,255,255,.2);border:0;color:#fff;font-size:18px;
+    width:36px;height:36px;border-radius:50%;cursor:pointer}
+  main{max-width:640px;margin:0 auto;padding:16px 16px 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  h2{font-size:15px;margin:0 0 12px;color:var(--sub);font-weight:700;letter-spacing:.02em}
+  .btn{appearance:none;border:0;border-radius:12px;padding:13px 18px;font-size:16px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:transform .05s,filter .15s;width:100%}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:var(--accent-soft);color:var(--accent-d)}
+  .btn-sm{width:auto;padding:8px 14px;font-size:14px;border-radius:10px}
+  label{display:block;font-size:13px;color:var(--sub);font-weight:700;margin:0 0 4px}
+  .field{margin-bottom:11px}
+  input,select,textarea{font-family:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--card);color:var(--text);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+  .row{display:flex;gap:8px;align-items:center}
+  /* summary */
+  .summary{border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;background:var(--accent-soft);
+    display:flex;align-items:center;gap:12px}
+  .summary .big{font-size:26px;line-height:1}
+  .summary .txt{flex:1}
+  .summary .txt b{color:var(--accent-d);font-size:17px}
+  .summary .txt span{display:block;font-size:12px;color:var(--sub)}
+  .summary.calm{background:var(--card);border:1px solid var(--line)}
+  .summary.calm .txt b{color:var(--ok)}
+  /* items */
+  ul.items{list-style:none;margin:0;padding:0}
+  ul.items li{display:flex;align-items:center;gap:10px;padding:12px 12px;margin-bottom:9px;
+    border:1px solid var(--line);border-left:4px solid var(--line);border-radius:12px;background:var(--card)}
+  ul.items li.soon{border-left-color:var(--warn)}
+  ul.items li.expired{border-left-color:var(--danger);opacity:.92}
+  ul.items li .body{flex:1;min-width:0}
+  ul.items li .store{font-weight:700;word-break:break-word}
+  ul.items li .memo{font-size:13px;color:var(--sub);word-break:break-word}
+  ul.items li .date{font-size:12px;color:var(--sub);margin-top:2px}
+  ul.items li .right{text-align:right;white-space:nowrap}
+  .badge{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;
+    background:var(--bg);color:var(--sub)}
+  .badge.soon{background:var(--warn);color:#fff}
+  .badge.expired{background:var(--danger);color:#fff}
+  .del{background:none;border:0;color:var(--danger);font-size:18px;cursor:pointer;padding:4px 6px}
+  .empty{text-align:center;color:var(--sub);padding:24px 8px;font-size:14px}
+  .ad-slot{margin:16px auto;max-width:640px;min-height:56px;border:1px dashed var(--line);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;background:var(--card)}
+  footer{max-width:640px;margin:0 auto;padding:18px 16px 34px;color:var(--sub);font-size:12px;text-align:center}
+  footer a{color:var(--sub)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+  .modal.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))}
+  .sheet h3{margin:0 0 12px;font-size:17px}
+  .sheet .btn{margin-top:8px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#2b2622;color:#fff;
+    padding:10px 18px;border-radius:22px;font-size:14px;opacity:0;transition:.25s;z-index:99;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <span class="ico">🎫</span>
+  <h1>ポイント期限メモ</h1>
+  <button class="gear" id="gear" aria-label="設定">⚙️</button>
+</header>
+
+<main>
+  <div class="summary" id="summary">
+    <span class="big" id="sumIcon">🎫</span>
+    <div class="txt"><b id="sumMain">まだ登録がありません</b><span id="sumSub">ポイントやクーポンの期限を登録しましょう。</span></div>
+  </div>
+
+  <div class="card">
+    <h2>新しく登録</h2>
+    <form id="addForm" autocomplete="off">
+      <div class="field">
+        <label for="store">店・サービス名（必須）</label>
+        <input id="store" placeholder="例：〇〇ドラッグ" maxlength="40" required>
+      </div>
+      <div class="field">
+        <label for="memo">ポイント数・クーポン内容（任意）</label>
+        <input id="memo" placeholder="例：500ポイント／10%OFF券" maxlength="60">
+      </div>
+      <div class="field">
+        <label for="date">有効期限（必須）</label>
+        <input id="date" type="date" required>
+      </div>
+      <button class="btn btn-primary" type="submit">＋ 追加する</button>
+    </form>
+  </div>
+
+  <div class="ad-slot"><!-- AdMob等の広告をここに表示 -->広告スペース</div>
+
+  <div class="card">
+    <h2>登録リスト（<span id="count">0</span>件・期限が近い順）</h2>
+    <ul class="items" id="list"></ul>
+    <p class="empty" id="empty">まだ登録がありません。上のフォームからポイントやクーポンの期限を追加しましょう。</p>
+  </div>
+</main>
+
+<footer>
+  <p>データはこの端末内にのみ保存されます。外部送信はありません。</p>
+  <p><a href="../../privacy-point-kigen.html">プライバシーポリシー</a>　|　<a href="../index.html">アプリ一覧</a></p>
+  <p>© ポイント期限メモ</p>
+</footer>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3>設定</h3>
+    <button class="btn btn-ghost" id="export">データを書き出す（バックアップ）</button>
+    <button class="btn btn-ghost" id="closeModal">閉じる</button>
+    <button class="btn" id="clear" style="background:var(--danger);color:#fff">すべてのデータを削除</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="point-kigen";
+  // ---- storage helper (shared pattern across all apps) ----
+  var store={
+    get:function(k,d){ try{var v=localStorage.getItem(KEY+":"+k);return v==null?d:JSON.parse(v);}catch(e){return d;} },
+    set:function(k,v){ try{localStorage.setItem(KEY+":"+k,JSON.stringify(v));}catch(e){} },
+    del:function(){ try{Object.keys(localStorage).forEach(function(x){if(x.indexOf(KEY+":")===0)localStorage.removeItem(x);});}catch(e){} }
+  };
+  function $(s){return document.querySelector(s);}
+  function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show");},1800);}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function uid(){return Date.now()+"-"+Math.floor(performance.now()*1000%100000);}
+
+  var items=store.get("items",[]); // {id,store,memo,date "YYYY-MM-DD"}
+
+  function save(){ store.set("items",items); }
+
+  // days from today (local, date-only). negative = past
+  function daysLeft(dateStr){
+    var p=String(dateStr).split("-");
+    if(p.length<3) return null;
+    var d=new Date(+p[0],(+p[1])-1,+p[2]);
+    var now=new Date();
+    var today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    return Math.round((d-today)/86400000);
+  }
+  function fmtDate(dateStr){
+    var p=String(dateStr).split("-");
+    if(p.length<3) return esc(dateStr);
+    return (+p[0])+"年"+(+p[1])+"月"+(+p[2])+"日";
+  }
+  function statusOf(dl){
+    if(dl===null) return {cls:"",label:"—"};
+    if(dl<0)  return {cls:"expired",label:"期限切れ"};
+    if(dl===0) return {cls:"soon",label:"今日まで"};
+    if(dl<=7) return {cls:"soon",label:"あと"+dl+"日"};
+    return {cls:"",label:"あと"+dl+"日"};
+  }
+
+  function renderSummary(){
+    var sm=$("#summary"), soon=0, expired=0;
+    items.forEach(function(it){
+      var dl=daysLeft(it.date);
+      if(dl===null) return;
+      if(dl<0) expired++;
+      else if(dl<=7) soon++;
+    });
+    if(!items.length){
+      sm.className="summary calm"; $("#sumIcon").textContent="🎫";
+      $("#sumMain").textContent="まだ登録がありません";
+      $("#sumSub").textContent="ポイントやクーポンの期限を登録しましょう。";
+      return;
+    }
+    if(soon>0||expired>0){
+      sm.className="summary"; $("#sumIcon").textContent="⚠️";
+      var main="まもなく失効 "+soon+"件";
+      if(expired>0) main+="・期限切れ "+expired+"件";
+      $("#sumMain").textContent=main;
+      $("#sumSub").textContent="7日以内に期限が来るものがあります。早めに使いましょう。";
+    }else{
+      sm.className="summary calm"; $("#sumIcon").textContent="✅";
+      $("#sumMain").textContent="まもなく失効するものはありません";
+      $("#sumSub").textContent="登録中 "+items.length+"件。すべて期限まで7日以上あります。";
+    }
+  }
+
+  function render(){
+    renderSummary();
+    var list=$("#list");
+    $("#count").textContent=items.length;
+    $("#empty").style.display=items.length?"none":"block";
+    var sorted=items.slice().sort(function(a,b){
+      return String(a.date).localeCompare(String(b.date));
+    });
+    list.innerHTML=sorted.map(function(it){
+      var dl=daysLeft(it.date), st=statusOf(dl);
+      return '<li class="'+st.cls+'" data-id="'+it.id+'">'+
+        '<div class="body">'+
+          '<div class="store">'+esc(it.store)+'</div>'+
+          (it.memo?'<div class="memo">'+esc(it.memo)+'</div>':'')+
+          '<div class="date">期限：'+fmtDate(it.date)+'</div>'+
+        '</div>'+
+        '<div class="right"><span class="badge '+st.cls+'">'+st.label+'</span></div>'+
+        '<button class="del" aria-label="削除">🗑</button></li>';
+    }).join("");
+  }
+
+  // add
+  $("#addForm").addEventListener("submit",function(e){
+    e.preventDefault();
+    var s=$("#store").value.trim(), m=$("#memo").value.trim(), d=$("#date").value;
+    if(!s){ toast("店・サービス名を入力してください"); return; }
+    if(!d){ toast("有効期限を入力してください"); return; }
+    items.push({id:uid(),store:s,memo:m,date:d});
+    save();
+    $("#store").value=""; $("#memo").value=""; $("#date").value="";
+    render(); toast("登録しました");
+  });
+
+  // delete (used / expired)
+  $("#list").addEventListener("click",function(e){
+    if(!e.target.classList.contains("del"))return;
+    var id=e.target.closest("li").getAttribute("data-id");
+    items=items.filter(function(i){return String(i.id)!==String(id);});
+    save(); render();
+  });
+
+  // settings modal
+  $("#gear").addEventListener("click",function(){$("#modal").classList.add("open");});
+  $("#closeModal").addEventListener("click",function(){$("#modal").classList.remove("open");});
+  $("#modal").addEventListener("click",function(e){if(e.target===this)this.classList.remove("open");});
+  $("#export").addEventListener("click",function(){
+    var data=JSON.stringify({items:items},null,2);
+    try{
+      var b=new Blob([data],{type:"application/json"});
+      var a=document.createElement("a");a.href=URL.createObjectURL(b);
+      a.download="point-kigen-backup.json";a.click();
+    }catch(e){ prompt("以下をコピーして保存してください",data); }
+  });
+  $("#clear").addEventListener("click",function(){
+    if(confirm("すべての登録データを削除します。よろしいですか？")){
+      store.del(); items=[]; render(); $("#modal").classList.remove("open"); toast("削除しました");
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

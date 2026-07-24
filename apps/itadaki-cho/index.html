@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#b8559e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="いただきもの・贈りものを記録。お返しの済み・未済も管理できます。">
+<title>いただきもの帳｜贈答とお返しの記録</title>
+<style>
+  :root{
+    --accent:#b8559e; --accent-d:#9d4285; --accent-soft:#f9ecf6;
+    --bg:#faf7f5; --card:#ffffff; --text:#2b2622; --sub:#8a827b;
+    --line:#eee6e0; --ok:#3fa66a; --warn:#e0952b; --danger:#d9534f;
+    --radius:16px; --shadow:0 2px 12px rgba(80,60,50,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#18140f; --card:#241e18; --text:#f2ece6; --sub:#a89f96;
+      --line:#372f27; --accent-soft:#341c30; --shadow:0 2px 12px rgba(0,0,0,.4);}
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    padding-bottom:env(safe-area-inset-bottom);-webkit-text-size-adjust:100%}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--accent),var(--accent-d));
+    color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  header .ico{font-size:24px;line-height:1}
+  header h1{font-size:18px;margin:0;font-weight:700;flex:1}
+  header button.gear{background:rgba(255,255,255,.2);border:0;color:#fff;font-size:18px;
+    width:36px;height:36px;border-radius:50%;cursor:pointer}
+  main{max-width:640px;margin:0 auto;padding:16px 16px 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  h2{font-size:15px;margin:0 0 12px;color:var(--sub);font-weight:700;letter-spacing:.02em}
+  .btn{appearance:none;border:0;border-radius:12px;padding:13px 18px;font-size:16px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:transform .05s,filter .15s;width:100%}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:var(--accent-soft);color:var(--accent-d)}
+  .btn-sm{width:auto;padding:8px 14px;font-size:14px;border-radius:10px}
+  input,select,textarea{font-family:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--card);color:var(--text);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+  .row{display:flex;gap:8px;align-items:center}
+  .field{margin-bottom:11px}
+  .field label{display:block;font-size:13px;color:var(--sub);font-weight:700;margin-bottom:5px}
+  .field label .req{color:var(--danger);font-weight:700}
+  /* 種別トグル */
+  .toggle{display:flex;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:11px}
+  .toggle button{flex:1;background:var(--card);color:var(--sub);border:0;padding:11px 8px;font-size:15px;
+    font-weight:700;cursor:pointer;font-family:inherit;transition:.15s}
+  .toggle button.on{background:var(--accent);color:#fff}
+  /* お返しチェック */
+  .checkrow{display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--accent-soft);
+    border-radius:10px;margin-bottom:11px}
+  .checkrow input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent);flex:none}
+  .checkrow label{font-size:14px;color:var(--text);font-weight:600;margin:0}
+  /* フィルタタブ */
+  .tabs{display:flex;gap:6px;margin-bottom:2px;flex-wrap:wrap}
+  .tabs button{flex:1;min-width:96px;background:var(--card);color:var(--sub);border:1px solid var(--line);
+    border-radius:11px;padding:9px 6px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+  .tabs button.on{background:var(--accent);color:#fff;border-color:transparent}
+  .tabs button .cnt{display:inline-block;min-width:18px;font-size:12px;margin-left:4px;
+    background:rgba(0,0,0,.10);border-radius:20px;padding:0 6px}
+  .tabs button.on .cnt{background:rgba(255,255,255,.28)}
+  .tabs button.pend{border-color:var(--accent)}
+  /* 未対応バナー */
+  .banner{display:flex;align-items:center;gap:9px;background:var(--accent-soft);border:1px solid var(--accent);
+    border-radius:12px;padding:11px 13px;margin-bottom:14px;color:var(--accent-d);font-size:14px;font-weight:700}
+  .banner .bico{font-size:20px}
+  ul.list{list-style:none;margin:0;padding:0}
+  ul.list li{display:flex;align-items:flex-start;gap:10px;padding:12px 4px;border-bottom:1px solid var(--line)}
+  ul.list li:last-child{border-bottom:0}
+  ul.list li .body{flex:1;min-width:0}
+  ul.list li .name{font-weight:700;word-break:break-word}
+  ul.list li .name .dir{font-size:12px;font-weight:700;padding:1px 8px;border-radius:20px;margin-right:7px;vertical-align:2px}
+  .dir.recv{background:var(--accent-soft);color:var(--accent-d)}
+  .dir.give{background:var(--bg);color:var(--sub);border:1px solid var(--line)}
+  ul.list li .gift{font-size:14px;color:var(--text);word-break:break-word;margin-top:1px}
+  ul.list li .meta{font-size:12px;color:var(--sub);margin-top:3px}
+  ul.list li .meta .tag{background:var(--bg);padding:1px 8px;border-radius:20px;margin-right:6px}
+  .ret-done{font-size:12px;color:var(--ok);font-weight:700}
+  .btn-ret{background:var(--accent);color:#fff;border:0;border-radius:9px;padding:6px 11px;font-size:13px;
+    font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px;white-space:nowrap}
+  .del{background:none;border:0;color:var(--danger);font-size:18px;cursor:pointer;padding:4px 8px;flex:none}
+  .empty{text-align:center;color:var(--sub);padding:20px 8px;font-size:14px}
+  .ad-slot{margin:16px auto;max-width:640px;min-height:56px;border:1px dashed var(--line);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;background:var(--card)}
+  footer{max-width:640px;margin:0 auto;padding:18px 16px 34px;color:var(--sub);font-size:12px;text-align:center}
+  footer a{color:var(--sub)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+  .modal.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))}
+  .sheet h3{margin:0 0 12px;font-size:17px}
+  .sheet .btn{margin-top:8px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#2b2622;color:#fff;
+    padding:10px 18px;border-radius:22px;font-size:14px;opacity:0;transition:.25s;z-index:99;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <span class="ico">🎁</span>
+  <h1>いただきもの帳</h1>
+  <button class="gear" id="gear" aria-label="設定">⚙️</button>
+</header>
+
+<main>
+  <div class="card">
+    <h2>記録を追加</h2>
+    <form id="addForm" autocomplete="off">
+      <div class="toggle" id="typeToggle">
+        <button type="button" data-type="received" class="on">🎁 もらった</button>
+        <button type="button" data-type="given">💝 贈った</button>
+      </div>
+      <div class="field">
+        <label>相手の名前 <span class="req">*</span></label>
+        <input id="name" placeholder="例：田中さん / 叔母" maxlength="40" required>
+      </div>
+      <div class="field">
+        <label>品物</label>
+        <input id="gift" placeholder="例：お菓子の詰め合わせ" maxlength="60">
+      </div>
+      <div class="row" style="gap:10px">
+        <div class="field" style="flex:1;margin-bottom:11px">
+          <label>日付</label>
+          <input id="date" type="date">
+        </div>
+        <div class="field" style="flex:1;margin-bottom:11px">
+          <label>用途</label>
+          <select id="purpose">
+            <option value="">選択</option>
+            <option>お中元</option><option>お歳暮</option>
+            <option>出産</option><option>結婚</option><option>その他</option>
+          </select>
+        </div>
+      </div>
+      <div class="checkrow" id="retWrap">
+        <input type="checkbox" id="returned">
+        <label for="returned">お返し済み（「もらった」の記録で使えます）</label>
+      </div>
+      <button class="btn btn-primary" type="submit">記録する</button>
+    </form>
+  </div>
+
+  <div class="ad-slot"><!-- AdMob等の広告をここに表示 -->広告スペース</div>
+
+  <div class="banner" id="banner" style="display:none">
+    <span class="bico">🔔</span>
+    <span>お返し未対応が <b id="pendCount">0</b> 件あります</span>
+  </div>
+
+  <div class="card">
+    <h2>記録一覧</h2>
+    <div class="tabs" id="tabs">
+      <button data-tab="received" class="on">もらった<span class="cnt" id="cRecv">0</span></button>
+      <button data-tab="given">贈った<span class="cnt" id="cGive">0</span></button>
+      <button data-tab="pending" class="pend">お返し未対応<span class="cnt" id="cPend">0</span></button>
+    </div>
+    <ul class="list" id="list"></ul>
+    <p class="empty" id="empty">まだ記録がありません。上のフォームからいただきもの・贈りものを記録しましょう。</p>
+  </div>
+</main>
+
+<footer>
+  <p>データはこの端末内にのみ保存されます。外部送信はありません。</p>
+  <p><a href="../../privacy-itadaki-cho.html">プライバシーポリシー</a>　|　<a href="../index.html">アプリ一覧</a></p>
+  <p>© いただきもの帳</p>
+</footer>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3>設定</h3>
+    <button class="btn btn-ghost" id="export">データを書き出す（バックアップ）</button>
+    <button class="btn btn-ghost" id="closeModal">閉じる</button>
+    <button class="btn" id="clear" style="background:var(--danger);color:#fff">すべてのデータを削除</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="itadaki-cho";
+  // ---- storage helper (shared pattern across all apps) ----
+  var store={
+    get:function(k,d){ try{var v=localStorage.getItem(KEY+":"+k);return v==null?d:JSON.parse(v);}catch(e){return d;} },
+    set:function(k,v){ try{localStorage.setItem(KEY+":"+k,JSON.stringify(v));}catch(e){} },
+    del:function(){ try{Object.keys(localStorage).forEach(function(x){if(x.indexOf(KEY+":")===0)localStorage.removeItem(x);});}catch(e){} }
+  };
+  function $(s){return document.querySelector(s);}
+  function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show");},1800);}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function todayStr(){var d=new Date();var m=("0"+(d.getMonth()+1)).slice(-2);var day=("0"+d.getDate()).slice(-2);return d.getFullYear()+"-"+m+"-"+day;}
+  function fmtDate(s){ if(!s)return""; var p=String(s).split("-"); if(p.length!==3)return esc(s); return (p[1]*1)+"/"+(p[2]*1); }
+
+  var items=store.get("items",[]);   // {id,type:"received"|"given",name,gift,date,purpose,returned}
+  var curTab=store.get("tab","received");
+  var curType="received";
+
+  function save(){ store.set("items",items); }
+
+  function counts(){
+    var r=0,g=0,p=0;
+    items.forEach(function(it){
+      if(it.type==="given")g++; else{ r++; if(!it.returned)p++; }
+    });
+    return {r:r,g:g,p:p};
+  }
+
+  function filtered(){
+    return items.filter(function(it){
+      if(curTab==="given")return it.type==="given";
+      if(curTab==="pending")return it.type==="received" && !it.returned;
+      return it.type==="received";
+    }).sort(function(a,b){ return (b.date||"").localeCompare(a.date||""); });
+  }
+
+  function render(){
+    var c=counts();
+    $("#cRecv").textContent=c.r; $("#cGive").textContent=c.g; $("#cPend").textContent=c.p;
+    var banner=$("#banner");
+    if(c.p>0){ banner.style.display="flex"; $("#pendCount").textContent=c.p; }
+    else banner.style.display="none";
+
+    // tabs active state
+    Array.prototype.forEach.call(document.querySelectorAll("#tabs button"),function(b){
+      b.classList.toggle("on", b.getAttribute("data-tab")===curTab);
+    });
+
+    var rows=filtered();
+    var list=$("#list"), empty=$("#empty");
+    empty.style.display=rows.length?"none":"block";
+    if(!rows.length){
+      empty.textContent = curTab==="pending"
+        ? "お返し未対応はありません。すべて対応済みです。"
+        : (curTab==="given"
+            ? "「贈った」記録はまだありません。"
+            : "まだ記録がありません。上のフォームからいただきもの・贈りものを記録しましょう。");
+    }
+    list.innerHTML=rows.map(function(it){
+      var dir = it.type==="given"
+        ? '<span class="dir give">贈った</span>'
+        : '<span class="dir recv">もらった</span>';
+      var meta='';
+      if(it.date)meta+='<span class="tag">'+esc(fmtDate(it.date))+'</span>';
+      if(it.purpose)meta+='<span class="tag">'+esc(it.purpose)+'</span>';
+      var retHtml='';
+      if(it.type==="received"){
+        retHtml = it.returned
+          ? '<div class="ret-done">✓ お返し済み</div>'
+          : '<button class="btn-ret" data-act="ret" data-id="'+esc(it.id)+'">お返し済にする</button>';
+      }
+      return '<li data-id="'+esc(it.id)+'"><div class="body">'+
+        '<div class="name">'+dir+esc(it.name)+'</div>'+
+        (it.gift?'<div class="gift">'+esc(it.gift)+'</div>':'')+
+        (meta?'<div class="meta">'+meta+'</div>':'')+
+        retHtml+
+        '</div><button class="del" data-act="del" aria-label="削除">🗑</button></li>';
+    }).join("");
+  }
+
+  // 種別トグル
+  $("#typeToggle").addEventListener("click",function(e){
+    var b=e.target.closest("button"); if(!b)return;
+    curType=b.getAttribute("data-type");
+    Array.prototype.forEach.call(this.querySelectorAll("button"),function(x){x.classList.remove("on");});
+    b.classList.add("on");
+    $("#retWrap").style.opacity = curType==="received" ? "1" : ".5";
+  });
+
+  // タブ
+  $("#tabs").addEventListener("click",function(e){
+    var b=e.target.closest("button"); if(!b)return;
+    curTab=b.getAttribute("data-tab"); store.set("tab",curTab); render();
+  });
+
+  // 追加
+  $("#addForm").addEventListener("submit",function(e){
+    e.preventDefault();
+    var n=$("#name").value.trim(); if(!n){toast("相手の名前を入力してください");return;}
+    var ret = curType==="received" && $("#returned").checked;
+    items.push({
+      id:Date.now()+"-"+Math.floor(performance.now()),
+      type:curType, name:n,
+      gift:$("#gift").value.trim(),
+      date:$("#date").value||todayStr(),
+      purpose:$("#purpose").value,
+      returned:ret
+    });
+    save();
+    $("#name").value=""; $("#gift").value=""; $("#purpose").value="";
+    $("#date").value=todayStr(); $("#returned").checked=false;
+    // 追加した種別のタブへ寄せる（未対応でもらった×未返しなら未対応が見やすい）
+    curTab = curType==="given" ? "given" : "received";
+    store.set("tab",curTab);
+    render(); toast("記録しました");
+  });
+
+  // 一覧操作（お返し済 / 削除）
+  $("#list").addEventListener("click",function(e){
+    var b=e.target.closest("[data-act]"); if(!b)return;
+    var li=e.target.closest("li"); if(!li)return;
+    var id=li.getAttribute("data-id");
+    var act=b.getAttribute("data-act");
+    if(act==="del"){
+      items=items.filter(function(i){return String(i.id)!==String(id);});
+      save(); render(); toast("削除しました");
+    }else if(act==="ret"){
+      items.forEach(function(i){ if(String(i.id)===String(id))i.returned=true; });
+      save(); render(); toast("お返し済みにしました");
+    }
+  });
+
+  // 設定モーダル
+  $("#gear").addEventListener("click",function(){$("#modal").classList.add("open");});
+  $("#closeModal").addEventListener("click",function(){$("#modal").classList.remove("open");});
+  $("#modal").addEventListener("click",function(e){if(e.target===this)this.classList.remove("open");});
+  $("#export").addEventListener("click",function(){
+    var data=JSON.stringify({items:items},null,2);
+    try{
+      var b=new Blob([data],{type:"application/json"});
+      var a=document.createElement("a");a.href=URL.createObjectURL(b);
+      a.download="itadaki-cho-backup.json";a.click();
+    }catch(e){ prompt("以下をコピーして保存してください",data); }
+  });
+  $("#clear").addEventListener("click",function(){
+    if(confirm("すべての記録を削除します。よろしいですか？")){
+      store.del(); items=[]; curTab="received"; render(); $("#modal").classList.remove("open");
+      toast("削除しました");
+    }
+  });
+
+  // 初期化
+  $("#date").value=todayStr();
+  render();
+})();
+</script>
+</body>
+</html>

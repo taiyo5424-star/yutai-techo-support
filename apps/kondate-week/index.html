@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e86aa0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="月〜日の献立を1週間分まとめて計画。買い物リストにコピーもできます。">
+<title>週間献立プランナー｜1週間の献立をまとめて計画</title>
+<style>
+  :root{
+    --accent:#e86aa0; --accent-d:#cf5187; --accent-soft:#fdecf3;
+    --bg:#faf7f5; --card:#ffffff; --text:#2b2622; --sub:#8a827b;
+    --line:#eee6e0; --ok:#3fa66a; --warn:#e0952b; --danger:#d9534f;
+    --radius:16px; --shadow:0 2px 12px rgba(80,60,50,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#18140f; --card:#241e18; --text:#f2ece6; --sub:#a89f96;
+      --line:#372f27; --accent-soft:#3a1d29; --shadow:0 2px 12px rgba(0,0,0,.4);}
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    padding-bottom:env(safe-area-inset-bottom);-webkit-text-size-adjust:100%}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--accent),var(--accent-d));
+    color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  header .ico{font-size:24px;line-height:1}
+  header h1{font-size:18px;margin:0;font-weight:700;flex:1}
+  header button.gear{background:rgba(255,255,255,.2);border:0;color:#fff;font-size:18px;
+    width:36px;height:36px;border-radius:50%;cursor:pointer}
+  main{max-width:640px;margin:0 auto;padding:16px 16px 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  h2{font-size:15px;margin:0 0 12px;color:var(--sub);font-weight:700;letter-spacing:.02em}
+  .btn{appearance:none;border:0;border-radius:12px;padding:13px 18px;font-size:16px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:transform .05s,filter .15s;width:100%}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:var(--accent-soft);color:var(--accent-d)}
+  .btn-sm{width:auto;padding:8px 14px;font-size:14px;border-radius:10px}
+  input{font-family:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--card);color:var(--text);width:100%}
+  input:focus{outline:2px solid var(--accent);border-color:transparent}
+  .empty{text-align:center;color:var(--sub);padding:16px 8px;font-size:14px}
+  /* weekly board */
+  .board{display:flex;flex-direction:column;gap:10px}
+  .day{display:flex;gap:12px;align-items:flex-start;padding:12px;border:1px solid var(--line);
+    border-radius:12px;background:var(--card)}
+  .day.today{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 1px var(--accent) inset}
+  .day .dow{flex:0 0 auto;width:42px;text-align:center;padding-top:2px}
+  .day .dow .w{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;
+    border-radius:50%;background:var(--accent-soft);color:var(--accent-d);font-weight:800;font-size:16px}
+  .day.sat .dow .w{color:#3f74c4}
+  .day.sun .dow .w{color:#d9534f}
+  .day.today .dow .w{background:var(--accent);color:#fff}
+  .day .dow .date{display:block;font-size:11px;color:var(--sub);margin-top:4px;line-height:1.3}
+  .day.today .dow .date{color:var(--accent-d);font-weight:700}
+  .day .fields{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+  .day .fields input{font-size:15px;padding:9px 11px}
+  .actions{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+  .ad-slot{margin:16px auto;max-width:640px;min-height:56px;border:1px dashed var(--line);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;background:var(--card)}
+  footer{max-width:640px;margin:0 auto;padding:18px 16px 34px;color:var(--sub);font-size:12px;text-align:center}
+  footer a{color:var(--sub)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+  .modal.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))}
+  .sheet h3{margin:0 0 12px;font-size:17px}
+  .sheet .btn{margin-top:8px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#2b2622;color:#fff;
+    padding:10px 18px;border-radius:22px;font-size:14px;opacity:0;transition:.25s;z-index:99;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <span class="ico">📅</span>
+  <h1>週間献立プランナー</h1>
+  <button class="gear" id="gear" aria-label="設定">⚙️</button>
+</header>
+
+<main>
+  <div class="card">
+    <h2>今週の献立</h2>
+    <div class="board" id="board"></div>
+    <p class="empty" id="hint">各曜日の欄をタップして主菜・副菜を入力しましょう。空欄の日は「未定」と表示されます。</p>
+    <div class="actions">
+      <button class="btn btn-primary" id="copy">🛒 買い物リストとしてコピー</button>
+      <button class="btn btn-ghost" id="clearWeek">今週をクリア</button>
+    </div>
+  </div>
+
+  <div class="ad-slot"><!-- AdMob等の広告をここに表示 -->広告スペース</div>
+</main>
+
+<footer>
+  <p>データはこの端末内にのみ保存されます。外部送信はありません。</p>
+  <p><a href="../../privacy-kondate-week.html">プライバシーポリシー</a>　|　<a href="../index.html">アプリ一覧</a></p>
+  <p>© 週間献立プランナー</p>
+</footer>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3>設定</h3>
+    <button class="btn btn-ghost" id="export">データを書き出す（バックアップ）</button>
+    <button class="btn btn-ghost" id="closeModal">閉じる</button>
+    <button class="btn" id="clear" style="background:var(--danger);color:#fff">すべてのデータを削除</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="kondate-week";
+  // ---- storage helper (shared pattern across all apps) ----
+  var store={
+    get:function(k,d){ try{var v=localStorage.getItem(KEY+":"+k);return v==null?d:JSON.parse(v);}catch(e){return d;} },
+    set:function(k,v){ try{localStorage.setItem(KEY+":"+k,JSON.stringify(v));}catch(e){} },
+    del:function(){ try{Object.keys(localStorage).forEach(function(x){if(x.indexOf(KEY+":")===0)localStorage.removeItem(x);});}catch(e){} }
+  };
+  function $(s){return document.querySelector(s);}
+  function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show");},1800);}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+  var DOW=["月","火","水","木","金","土","日"];
+  function emptyWeek(){var a=[];for(var i=0;i<7;i++)a.push({main:"",side:""});return a;}
+
+  // load & normalize
+  var week=store.get("week",null);
+  if(!Array.isArray(week)||week.length!==7){ week=emptyWeek(); }
+  else{ week=week.map(function(d){d=d||{};return{main:String(d.main||""),side:String(d.side||"")};}); }
+
+  function save(){ store.set("week",week); }
+
+  function todayIndex(){var n=new Date();return (n.getDay()+6)%7;} // 0=月 .. 6=日
+  function mondayDate(){var n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate()-todayIndex());}
+  function menuLine(d){
+    var p=[]; d=d||{};
+    if(d.main&&d.main.trim())p.push(d.main.trim());
+    if(d.side&&d.side.trim())p.push(d.side.trim());
+    return p.length?p.join("／"):"未定";
+  }
+
+  function render(){
+    var ti=todayIndex(), mon=mondayDate(), allEmpty=true;
+    var html=DOW.map(function(w,i){
+      var dd=new Date(mon.getFullYear(),mon.getMonth(),mon.getDate()+i);
+      var md=(dd.getMonth()+1)+"/"+dd.getDate();
+      var day=week[i]||{main:"",side:""};
+      if(day.main||day.side)allEmpty=false;
+      var cls="day"+(i===ti?" today":"")+(i===5?" sat":"")+(i===6?" sun":"");
+      var dateLine=md+(i===ti?'<br>今日':'');
+      return '<div class="'+cls+'">'+
+          '<div class="dow"><span class="w">'+w+'</span><span class="date">'+dateLine+'</span></div>'+
+          '<div class="fields">'+
+            '<input class="fld" type="text" data-idx="'+i+'" data-f="main" maxlength="40" placeholder="主菜（未定）" value="'+esc(day.main)+'">'+
+            '<input class="fld" type="text" data-idx="'+i+'" data-f="side" maxlength="40" placeholder="副菜（未定）" value="'+esc(day.side)+'">'+
+          '</div>'+
+        '</div>';
+    }).join("");
+    $("#board").innerHTML=html;
+    $("#hint").style.display=allEmpty?"block":"none";
+  }
+
+  // edit (event delegation, no re-render to keep focus)
+  $("#board").addEventListener("input",function(e){
+    var el=e.target; if(!el.classList.contains("fld"))return;
+    var i=parseInt(el.getAttribute("data-idx"),10), f=el.getAttribute("data-f");
+    if(i<0||i>6)return;
+    if(!week[i])week[i]={main:"",side:""};
+    week[i][f]=el.value;
+    save();
+  });
+
+  // copy as shopping list
+  function copyText(text){
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){toast("コピーしました");},function(){prompt("以下をコピーしてください",text);});
+    }else{
+      prompt("以下をコピーしてください",text);
+    }
+  }
+  $("#copy").addEventListener("click",function(){
+    var mon=mondayDate();
+    var lines=["【今週の献立】"];
+    DOW.forEach(function(w,i){
+      var dd=new Date(mon.getFullYear(),mon.getMonth(),mon.getDate()+i);
+      var md=(dd.getMonth()+1)+"/"+dd.getDate();
+      lines.push(w+"("+md+") "+menuLine(week[i]));
+    });
+    copyText(lines.join("\n"));
+  });
+
+  // clear this week
+  $("#clearWeek").addEventListener("click",function(){
+    if(confirm("今週の献立をすべてクリアします。よろしいですか？")){
+      week=emptyWeek(); save(); render(); toast("クリアしました");
+    }
+  });
+
+  // settings modal
+  $("#gear").addEventListener("click",function(){$("#modal").classList.add("open");});
+  $("#closeModal").addEventListener("click",function(){$("#modal").classList.remove("open");});
+  $("#modal").addEventListener("click",function(e){if(e.target===this)this.classList.remove("open");});
+  $("#export").addEventListener("click",function(){
+    var data=JSON.stringify({week:week},null,2);
+    try{
+      var b=new Blob([data],{type:"application/json"});
+      var a=document.createElement("a");a.href=URL.createObjectURL(b);
+      a.download="kondate-week-backup.json";a.click();
+    }catch(e){ prompt("以下をコピーして保存してください",data); }
+  });
+  $("#clear").addEventListener("click",function(){
+    if(confirm("すべての献立データを削除します。よろしいですか？")){
+      store.del(); week=emptyWeek(); render(); $("#modal").classList.remove("open"); toast("削除しました");
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

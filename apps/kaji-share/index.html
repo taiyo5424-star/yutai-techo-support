@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ef8f3c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="家事を家族で分担してポイント化。誰がどれだけやったかが見える化されます。">
+<title>家事シェア｜家事の分担を見える化</title>
+<style>
+  :root{
+    --accent:#ef8f3c; --accent-d:#d4762a; --accent-soft:#fdf1e6;
+    --bg:#faf7f5; --card:#ffffff; --text:#2b2622; --sub:#8a827b;
+    --line:#eee6e0; --ok:#3fa66a; --warn:#e0952b; --danger:#d9534f;
+    --radius:16px; --shadow:0 2px 12px rgba(80,60,50,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#18140f; --card:#241e18; --text:#f2ece6; --sub:#a89f96;
+      --line:#372f27; --accent-soft:#3a2a18; --shadow:0 2px 12px rgba(0,0,0,.4);}
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    padding-bottom:env(safe-area-inset-bottom);-webkit-text-size-adjust:100%}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--accent),var(--accent-d));
+    color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  header .ico{font-size:24px;line-height:1}
+  header h1{font-size:18px;margin:0;font-weight:700;flex:1}
+  header button.gear{background:rgba(255,255,255,.2);border:0;color:#fff;font-size:18px;
+    width:36px;height:36px;border-radius:50%;cursor:pointer}
+  main{max-width:640px;margin:0 auto;padding:16px 16px 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  h2{font-size:15px;margin:0 0 12px;color:var(--sub);font-weight:700;letter-spacing:.02em}
+  .btn{appearance:none;border:0;border-radius:12px;padding:13px 18px;font-size:16px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:transform .05s,filter .15s;width:100%}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:var(--accent-soft);color:var(--accent-d)}
+  .btn-sm{width:auto;padding:8px 14px;font-size:14px;border-radius:10px}
+  input,select,textarea{font-family:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--card);color:var(--text);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+  .row{display:flex;gap:8px;align-items:center}
+  .record{background:var(--accent-soft);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+  .record h2{color:var(--accent-d)}
+  .record .selrow{display:flex;gap:8px;margin-bottom:10px}
+  .record .selrow select{flex:1;min-width:0}
+  ul.list{list-style:none;margin:0;padding:0}
+  ul.list li{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--line)}
+  ul.list li:last-child{border-bottom:0}
+  ul.list li .name{flex:1;word-break:break-word}
+  ul.list li .tag{font-size:12px;color:var(--sub);background:var(--bg);padding:2px 8px;border-radius:20px}
+  .del{background:none;border:0;color:var(--danger);font-size:18px;cursor:pointer;padding:4px 8px}
+  .empty{text-align:center;color:var(--sub);padding:20px 8px;font-size:14px}
+  /* ranking */
+  .rank{list-style:none;margin:0;padding:0}
+  .rank li{padding:10px 2px;border-bottom:1px solid var(--line)}
+  .rank li:last-child{border-bottom:0}
+  .rank .top{display:flex;align-items:baseline;gap:8px;margin-bottom:5px}
+  .rank .medal{font-size:16px;width:22px;text-align:center}
+  .rank .rname{flex:1;font-weight:600;word-break:break-word}
+  .rank .rpt{font-weight:800;color:var(--accent-d);font-size:15px;white-space:nowrap}
+  .rank .rpt small{color:var(--sub);font-weight:600;font-size:12px}
+  .bar-wrap{height:10px;background:var(--bg);border-radius:20px;overflow:hidden}
+  .bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-d));border-radius:20px;transition:width .4s}
+  /* today log */
+  .log{font-size:14px}
+  .log .lrow{display:flex;align-items:center;gap:8px;padding:9px 2px;border-bottom:1px solid var(--line)}
+  .log .lrow:last-child{border-bottom:0}
+  .log .who{font-weight:700}
+  .log .what{flex:1;color:var(--sub);word-break:break-word}
+  .log .lpt{color:var(--accent-d);font-weight:700;white-space:nowrap}
+  .ad-slot{margin:16px auto;max-width:640px;min-height:56px;border:1px dashed var(--line);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;background:var(--card)}
+  footer{max-width:640px;margin:0 auto;padding:18px 16px 34px;color:var(--sub);font-size:12px;text-align:center}
+  footer a{color:var(--sub)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+  .modal.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))}
+  .sheet h3{margin:0 0 12px;font-size:17px}
+  .sheet .btn{margin-top:8px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#2b2622;color:#fff;
+    padding:10px 18px;border-radius:22px;font-size:14px;opacity:0;transition:.25s;z-index:99;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <span class="ico">🧹</span>
+  <h1>家事シェア</h1>
+  <button class="gear" id="gear" aria-label="設定">⚙️</button>
+</header>
+
+<main>
+  <div class="record">
+    <h2>家事を記録する</h2>
+    <div class="selrow">
+      <select id="recMember"></select>
+      <select id="recTask"></select>
+    </div>
+    <button class="btn btn-primary" id="recBtn">✅ やった！を記録</button>
+    <p class="empty" id="recEmpty" style="padding:10px 4px 0">まずは下の欄からメンバーと家事を登録してください。</p>
+  </div>
+
+  <div class="ad-slot"><!-- AdMob等の広告をここに表示 -->広告スペース</div>
+
+  <div class="card">
+    <h2>今週のランキング</h2>
+    <ul class="rank" id="rank"></ul>
+    <p class="empty" id="rankEmpty">まだ記録がありません。家事を記録するとポイントがたまります。</p>
+  </div>
+
+  <div class="card">
+    <h2>今日の記録（<span id="todayCount">0</span>件）</h2>
+    <div class="log" id="log"></div>
+    <p class="empty" id="logEmpty">今日はまだ記録がありません。</p>
+  </div>
+
+  <div class="card">
+    <h2>メンバー（<span id="mCount">0</span>人）</h2>
+    <form id="mForm" class="row" autocomplete="off">
+      <input id="mName" placeholder="例：お母さん" maxlength="20" required>
+      <button class="btn btn-primary btn-sm" type="submit">追加</button>
+    </form>
+    <ul class="list" id="mList" style="margin-top:10px"></ul>
+    <p class="empty" id="mEmpty">家族のメンバーを追加しましょう。</p>
+  </div>
+
+  <div class="card">
+    <h2>家事リスト（<span id="tCount">0</span>件）</h2>
+    <form id="tForm" autocomplete="off">
+      <div class="row">
+        <input id="tName" placeholder="例：食器洗い" maxlength="24" required>
+        <select id="tPt" style="max-width:118px" aria-label="ポイント">
+          <option value="1">★1（軽め）</option>
+          <option value="2">★2（ふつう）</option>
+          <option value="3">★3（大変）</option>
+          <option value="5">★5（重労働）</option>
+        </select>
+        <button class="btn btn-primary btn-sm" type="submit">追加</button>
+      </div>
+    </form>
+    <ul class="list" id="tList" style="margin-top:10px"></ul>
+    <p class="empty" id="tEmpty">「食器洗い」「洗濯」などの家事を登録しましょう。難しい家事ほどポイントを高く。</p>
+  </div>
+</main>
+
+<footer>
+  <p>データはこの端末内にのみ保存されます。外部送信はありません。</p>
+  <p><a href="../../privacy-kaji-share.html">プライバシーポリシー</a>　|　<a href="../index.html">アプリ一覧</a></p>
+  <p>© 家事シェア</p>
+</footer>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3>設定</h3>
+    <button class="btn btn-ghost" id="resetWeek">今週をリセット（ポイントを0に）</button>
+    <button class="btn btn-ghost" id="export">データを書き出す（バックアップ）</button>
+    <button class="btn btn-ghost" id="closeModal">閉じる</button>
+    <button class="btn" id="clear" style="background:var(--danger);color:#fff">すべてのデータを削除</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="kaji-share";
+  // ---- storage helper (shared pattern across all apps) ----
+  var store={
+    get:function(k,d){ try{var v=localStorage.getItem(KEY+":"+k);return v==null?d:JSON.parse(v);}catch(e){return d;} },
+    set:function(k,v){ try{localStorage.setItem(KEY+":"+k,JSON.stringify(v));}catch(e){} },
+    del:function(){ try{Object.keys(localStorage).forEach(function(x){if(x.indexOf(KEY+":")===0)localStorage.removeItem(x);});}catch(e){} }
+  };
+  function $(s){return document.querySelector(s);}
+  function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show");},1800);}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function uid(){return Date.now()+"-"+Math.floor(performance.now()*1000%100000);}
+  function ymd(d){return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();}
+
+  var members=store.get("members",[]);  // {id,name}
+  var tasks=store.get("tasks",[]);      // {id,name,pt}
+  var logs=store.get("logs",[]);        // {id,mId,mName,tName,pt,day,ts}
+
+  function save(){ store.set("members",members); store.set("tasks",tasks); store.set("logs",logs); }
+
+  function totals(){
+    var map={};
+    members.forEach(function(m){map[m.id]=0;});
+    logs.forEach(function(l){ if(map[l.mId]!=null) map[l.mId]+=(+l.pt||0); });
+    return map;
+  }
+
+  function fillSelects(){
+    var ms=$("#recMember"), ts=$("#recTask");
+    ms.innerHTML=members.length
+      ? members.map(function(m){return '<option value="'+m.id+'">'+esc(m.name)+'</option>';}).join("")
+      : '<option value="">メンバー未登録</option>';
+    ts.innerHTML=tasks.length
+      ? tasks.map(function(t){return '<option value="'+t.id+'">'+esc(t.name)+'（★'+(+t.pt)+'）</option>';}).join("")
+      : '<option value="">家事未登録</option>';
+    var ready=members.length>0 && tasks.length>0;
+    ms.disabled=ts.disabled=!ready;
+    $("#recBtn").disabled=!ready;
+    $("#recBtn").style.opacity=ready?"1":".5";
+    $("#recEmpty").style.display=ready?"none":"block";
+  }
+
+  function renderRank(){
+    var map=totals(), rankEl=$("#rank");
+    var arr=members.map(function(m){return {name:m.name,pt:map[m.id]||0};});
+    arr.sort(function(a,b){return b.pt-a.pt;});
+    var max=arr.reduce(function(x,y){return Math.max(x,y.pt);},0);
+    var anyPt=arr.some(function(a){return a.pt>0;});
+    $("#rankEmpty").style.display=(members.length&&anyPt)?"none":"block";
+    if(!members.length||!anyPt){ rankEl.innerHTML=""; return; }
+    var medals=["🥇","🥈","🥉"];
+    rankEl.innerHTML=arr.map(function(a,i){
+      var w=max>0?Math.round(a.pt/max*100):0;
+      var medal=medals[i]||("<span style='color:var(--sub)'>"+(i+1)+"</span>");
+      return '<li><div class="top"><span class="medal">'+medal+'</span>'+
+        '<span class="rname">'+esc(a.name)+'</span>'+
+        '<span class="rpt">'+a.pt+'<small> pt</small></span></div>'+
+        '<div class="bar-wrap"><div class="bar" style="width:'+w+'%"></div></div></li>';
+    }).join("");
+  }
+
+  function renderLog(){
+    var today=ymd(new Date());
+    var todays=logs.filter(function(l){return l.day===today;});
+    $("#todayCount").textContent=todays.length;
+    $("#logEmpty").style.display=todays.length?"none":"block";
+    $("#log").innerHTML=todays.map(function(l){
+      return '<div class="lrow"><span class="who">'+esc(l.mName)+'</span>'+
+        '<span class="what">'+esc(l.tName)+'</span>'+
+        '<span class="lpt">+'+(+l.pt)+'</span>'+
+        '<button class="del" data-id="'+l.id+'" aria-label="取り消し">🗑</button></div>';
+    }).join("");
+  }
+
+  function renderMembers(){
+    $("#mCount").textContent=members.length;
+    $("#mEmpty").style.display=members.length?"none":"block";
+    $("#mList").innerHTML=members.map(function(m){
+      return '<li data-id="'+m.id+'"><span class="name">'+esc(m.name)+'</span>'+
+        '<button class="del" aria-label="削除">🗑</button></li>';
+    }).join("");
+  }
+
+  function renderTasks(){
+    $("#tCount").textContent=tasks.length;
+    $("#tEmpty").style.display=tasks.length?"none":"block";
+    $("#tList").innerHTML=tasks.map(function(t){
+      return '<li data-id="'+t.id+'"><span class="name">'+esc(t.name)+'</span>'+
+        '<span class="tag">★'+(+t.pt)+'</span>'+
+        '<button class="del" aria-label="削除">🗑</button></li>';
+    }).join("");
+  }
+
+  function render(){ fillSelects(); renderRank(); renderLog(); renderMembers(); renderTasks(); }
+
+  // record
+  $("#recBtn").addEventListener("click",function(){
+    if(!members.length||!tasks.length){ toast("メンバーと家事を登録してください"); return; }
+    var mId=$("#recMember").value, tId=$("#recTask").value;
+    var m=members.filter(function(x){return String(x.id)===String(mId);})[0];
+    var t=tasks.filter(function(x){return String(x.id)===String(tId);})[0];
+    if(!m||!t){ toast("選択してください"); return; }
+    logs.unshift({id:uid(),mId:m.id,mName:m.name,tName:t.name,pt:+t.pt,day:ymd(new Date()),ts:Date.now()});
+    logs=logs.slice(0,800);
+    save(); renderRank(); renderLog(); toast(m.name+"さんに +"+(+t.pt)+"pt！");
+  });
+  // undo a log entry
+  $("#log").addEventListener("click",function(e){
+    if(!e.target.classList.contains("del"))return;
+    var id=e.target.getAttribute("data-id");
+    logs=logs.filter(function(l){return String(l.id)!==String(id);});
+    save(); renderRank(); renderLog();
+  });
+
+  // add member
+  $("#mForm").addEventListener("submit",function(e){
+    e.preventDefault();
+    var n=$("#mName").value.trim(); if(!n)return;
+    members.push({id:uid(),name:n});
+    save(); $("#mName").value=""; fillSelects(); renderMembers(); renderRank(); toast("メンバーを追加しました");
+  });
+  $("#mList").addEventListener("click",function(e){
+    if(!e.target.classList.contains("del"))return;
+    var id=e.target.closest("li").getAttribute("data-id");
+    members=members.filter(function(m){return String(m.id)!==String(id);});
+    save(); render();
+  });
+
+  // add task
+  $("#tForm").addEventListener("submit",function(e){
+    e.preventDefault();
+    var n=$("#tName").value.trim(); if(!n)return;
+    tasks.push({id:uid(),name:n,pt:+$("#tPt").value||1});
+    save(); $("#tName").value=""; $("#tPt").value="1"; fillSelects(); renderTasks(); toast("家事を追加しました");
+  });
+  $("#tList").addEventListener("click",function(e){
+    if(!e.target.classList.contains("del"))return;
+    var id=e.target.closest("li").getAttribute("data-id");
+    tasks=tasks.filter(function(t){return String(t.id)!==String(id);});
+    save(); render();
+  });
+
+  // settings modal
+  $("#gear").addEventListener("click",function(){$("#modal").classList.add("open");});
+  $("#closeModal").addEventListener("click",function(){$("#modal").classList.remove("open");});
+  $("#modal").addEventListener("click",function(e){if(e.target===this)this.classList.remove("open");});
+  $("#resetWeek").addEventListener("click",function(){
+    if(confirm("今週の記録を消してポイントを0に戻します。よろしいですか？")){
+      logs=[]; save(); render(); $("#modal").classList.remove("open"); toast("今週をリセットしました");
+    }
+  });
+  $("#export").addEventListener("click",function(){
+    var data=JSON.stringify({members:members,tasks:tasks,logs:logs},null,2);
+    try{
+      var b=new Blob([data],{type:"application/json"});
+      var a=document.createElement("a");a.href=URL.createObjectURL(b);
+      a.download="kaji-share-backup.json";a.click();
+    }catch(e){ prompt("以下をコピーして保存してください",data); }
+  });
+  $("#clear").addEventListener("click",function(){
+    if(confirm("すべてのメンバー・家事・記録を削除します。よろしいですか？")){
+      store.del(); members=[]; tasks=[]; logs=[]; render(); $("#modal").classList.remove("open"); toast("削除しました");
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

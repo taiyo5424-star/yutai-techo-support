@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e85f7a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="目標を決めてコツコツ先取り貯金。進み具合をバーで応援します。">
+<title>先取り貯金｜目標をコツコツ貯める</title>
+<style>
+  :root{
+    --accent:#e85f7a; --accent-d:#cd4763; --accent-soft:#fdecf0;
+    --bg:#faf7f5; --card:#ffffff; --text:#2b2622; --sub:#8a827b;
+    --line:#eee6e0; --ok:#3fa66a; --warn:#e0952b; --danger:#d9534f;
+    --radius:16px; --shadow:0 2px 12px rgba(80,60,50,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#18140f; --card:#241e18; --text:#f2ece6; --sub:#a89f96;
+      --line:#372f27; --accent-soft:#3a1c24; --shadow:0 2px 12px rgba(0,0,0,.4);}
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    padding-bottom:env(safe-area-inset-bottom);-webkit-text-size-adjust:100%}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--accent),var(--accent-d));
+    color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  header .ico{font-size:24px;line-height:1}
+  header h1{font-size:18px;margin:0;font-weight:700;flex:1}
+  header button.gear{background:rgba(255,255,255,.2);border:0;color:#fff;font-size:18px;
+    width:36px;height:36px;border-radius:50%;cursor:pointer}
+  main{max-width:640px;margin:0 auto;padding:16px 16px 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  h2{font-size:15px;margin:0 0 12px;color:var(--sub);font-weight:700;letter-spacing:.02em}
+  .btn{appearance:none;border:0;border-radius:12px;padding:13px 18px;font-size:16px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:transform .05s,filter .15s;width:100%}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:var(--accent-soft);color:var(--accent-d)}
+  .btn-sm{width:auto;padding:8px 14px;font-size:14px;border-radius:10px}
+  input,select,textarea{font-family:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--card);color:var(--text);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+  .row{display:flex;gap:8px;align-items:center}
+  .field{margin-bottom:9px}
+  .field label{display:block;font-size:12px;color:var(--sub);font-weight:700;margin-bottom:4px}
+  .empty{text-align:center;color:var(--sub);padding:20px 8px;font-size:14px}
+  .ad-slot{margin:16px auto;max-width:640px;min-height:56px;border:1px dashed var(--line);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;background:var(--card)}
+  footer{max-width:640px;margin:0 auto;padding:18px 16px 34px;color:var(--sub);font-size:12px;text-align:center}
+  footer a{color:var(--sub)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+  .modal.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))}
+  .sheet h3{margin:0 0 12px;font-size:17px}
+  .sheet .btn{margin-top:8px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#2b2622;color:#fff;
+    padding:10px 18px;border-radius:22px;font-size:14px;opacity:0;transition:.25s;z-index:99;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* ---- sakidori-chokin specific ---- */
+  .summary{background:var(--accent-soft);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;
+    display:flex;justify-content:space-around;text-align:center;gap:8px}
+  .summary .n{font-size:20px;font-weight:800;color:var(--accent-d)}
+  .summary .l{font-size:11px;color:var(--sub);font-weight:700}
+  .goal{position:relative}
+  .goal .gtop{display:flex;align-items:baseline;gap:8px;margin-bottom:2px}
+  .goal .gname{font-size:17px;font-weight:800;flex:1;word-break:break-word}
+  .goal .gdel{background:none;border:0;color:var(--sub);font-size:16px;cursor:pointer;padding:2px 6px}
+  .goal.done{border-color:var(--ok)}
+  .goal .badge{display:inline-block;font-size:12px;font-weight:800;color:#fff;background:var(--ok);
+    padding:2px 10px;border-radius:20px;margin-left:4px}
+  .amt{font-size:14px;color:var(--sub);margin:4px 0 10px}
+  .amt b{color:var(--text);font-size:19px;font-weight:800}
+  .bar{height:14px;background:var(--line);border-radius:20px;overflow:hidden;margin:4px 0}
+  .bar>span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-d));
+    border-radius:20px;transition:width .5s ease;min-width:0}
+  .goal.done .bar>span{background:linear-gradient(90deg,#4fbf7f,#3fa66a)}
+  .meta{display:flex;justify-content:space-between;font-size:12.5px;color:var(--sub);margin-top:4px}
+  .cheer{font-size:13.5px;color:var(--accent-d);font-weight:700;margin:8px 0 2px}
+  .goal.done .cheer{color:var(--ok)}
+  .addrow{display:flex;gap:8px;margin-top:12px}
+  .addrow input{flex:1}
+  .hist{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+  .hist h4{margin:0 0 4px;font-size:12px;color:var(--sub);font-weight:700}
+  ul.htlist{list-style:none;margin:0;padding:0;max-height:180px;overflow:auto}
+  ul.htlist li{display:flex;align-items:center;gap:8px;padding:6px 2px;border-bottom:1px solid var(--line);font-size:14px}
+  ul.htlist li:last-child{border-bottom:0}
+  ul.htlist li .ha{flex:1;font-weight:700}
+  ul.htlist li .hd{color:var(--sub);font-size:12px}
+  .del{background:none;border:0;color:var(--danger);font-size:16px;cursor:pointer;padding:2px 8px}
+</style>
+</head>
+<body>
+<header>
+  <span class="ico">🐷</span>
+  <h1>先取り貯金</h1>
+  <button class="gear" id="gear" aria-label="設定">⚙️</button>
+</header>
+
+<main>
+  <div class="summary">
+    <div><div class="n" id="sGoals">0</div><div class="l">目標</div></div>
+    <div><div class="n" id="sSaved">¥0</div><div class="l">貯金の合計</div></div>
+    <div><div class="n" id="sDone">0</div><div class="l">達成した目標</div></div>
+  </div>
+
+  <div class="card">
+    <h2>新しい目標をつくる</h2>
+    <form id="addForm" autocomplete="off">
+      <div class="field">
+        <label for="gname">目標名（必須）</label>
+        <input id="gname" placeholder="例：家族旅行、新しい冷蔵庫" maxlength="30" required>
+      </div>
+      <div class="field">
+        <label for="gtarget">目標金額（必須・円）</label>
+        <input id="gtarget" type="number" inputmode="numeric" min="1" step="1" placeholder="例：100000" required>
+      </div>
+      <div class="field">
+        <label for="gdue">期限（任意）</label>
+        <input id="gdue" type="date">
+      </div>
+      <button class="btn btn-primary" type="submit">＋ 目標を追加する</button>
+    </form>
+  </div>
+
+  <div class="ad-slot"><!-- AdMob等の広告をここに表示 -->広告スペース</div>
+
+  <div id="goals"></div>
+  <p class="empty" id="empty">まだ目標がありません。上のフォームから「貯めたい目標」をつくって、先取り貯金を始めましょう。</p>
+</main>
+
+<footer>
+  <p>データはこの端末内にのみ保存されます。外部送信はありません。</p>
+  <p><a href="../../privacy-sakidori-chokin.html">プライバシーポリシー</a>　|　<a href="../index.html">アプリ一覧</a></p>
+  <p>© 先取り貯金</p>
+</footer>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3>設定</h3>
+    <button class="btn btn-ghost" id="export">データを書き出す（バックアップ）</button>
+    <button class="btn btn-ghost" id="closeModal">閉じる</button>
+    <button class="btn" id="clear" style="background:var(--danger);color:#fff">すべてのデータを削除</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="sakidori-chokin";
+  // ---- storage helper (shared pattern across all apps) ----
+  var store={
+    get:function(k,d){ try{var v=localStorage.getItem(KEY+":"+k);return v==null?d:JSON.parse(v);}catch(e){return d;} },
+    set:function(k,v){ try{localStorage.setItem(KEY+":"+k,JSON.stringify(v));}catch(e){} },
+    del:function(){ try{Object.keys(localStorage).forEach(function(x){if(x.indexOf(KEY+":")===0)localStorage.removeItem(x);});}catch(e){} }
+  };
+  function $(s){return document.querySelector(s);}
+  function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show");},1800);}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+  function yen(n){ return "¥"+Math.round(n).toLocaleString("ja-JP"); }
+  function uid(){ return Date.now()+"-"+Math.floor(Math.random()*100000); }
+
+  var goals=store.get("goals",[]);   // {id,name,target,due,entries:[{id,amount,at}]}
+  function save(){ store.set("goals",goals); }
+
+  function saved(g){ return (g.entries||[]).reduce(function(a,b){return a+(Number(b.amount)||0);},0); }
+
+  function daysLeft(due){
+    if(!due)return null;
+    var d=new Date(due+"T00:00:00");
+    if(isNaN(d.getTime()))return null;
+    var now=new Date(); now.setHours(0,0,0,0);
+    return Math.round((d.getTime()-now.getTime())/86400000);
+  }
+
+  function cheerText(pct,done){
+    if(done)return "目標達成、おめでとうございます！🎉 よく頑張りました。";
+    if(pct<=0)return "さあ、はじめの一歩！少額からでもコツコツいきましょう。";
+    if(pct<25)return "スタートは順調です。この調子でコツコツ続けましょう😊";
+    if(pct<50)return "いい流れです。もう少しで折り返しですよ💪";
+    if(pct<75)return "折り返しを過ぎました！ゴールが見えてきました✨";
+    if(pct<100)return "あと少し！ラストスパート、応援しています🔥";
+    return "";
+  }
+
+  function fmtDate(iso){
+    var d=new Date(iso);
+    if(isNaN(d.getTime()))return "";
+    return (d.getMonth()+1)+"/"+d.getDate();
+  }
+
+  function render(){
+    var box=$("#goals"), empty=$("#empty");
+    empty.style.display=goals.length?"none":"block";
+
+    var total=0,doneCount=0;
+    goals.forEach(function(g){ total+=saved(g); if(saved(g)>=g.target)doneCount++; });
+    $("#sGoals").textContent=goals.length;
+    $("#sSaved").textContent=yen(total);
+    $("#sDone").textContent=doneCount;
+
+    box.innerHTML=goals.map(function(g){
+      var s=saved(g), target=Number(g.target)||0;
+      var pct=target>0?Math.min(100,Math.round(s/target*100)):0;
+      var done=target>0 && s>=target;
+      var remain=Math.max(0,target-s);
+      var dl=daysLeft(g.due);
+      var metaLeft="", metaRight="";
+      if(target>0){ metaRight="達成率 "+pct+"%"; }
+      if(g.due){
+        if(done){ metaLeft="期限 "+esc(g.due); }
+        else if(dl===null){ metaLeft=""; }
+        else if(dl>0){ metaLeft="あと "+dl+" 日（"+esc(g.due)+"）"; }
+        else if(dl===0){ metaLeft="今日が期限です"; }
+        else { metaLeft="期限を "+(-dl)+" 日超過"; }
+      }
+
+      var entries=(g.entries||[]).slice().sort(function(a,b){return b.id>a.id?1:-1;});
+      var hist="";
+      if(entries.length){
+        hist='<div class="hist"><h4>入金の履歴（'+entries.length+'件）</h4><ul class="htlist">'+
+          entries.map(function(e){
+            return '<li data-eid="'+esc(e.id)+'"><span class="ha">'+yen(e.amount)+'</span>'+
+              '<span class="hd">'+esc(fmtDate(e.at))+'</span>'+
+              '<button class="del" data-act="delEntry" aria-label="この入金を取り消す">🗑</button></li>';
+          }).join("")+'</ul></div>';
+      }
+
+      return '<div class="card goal'+(done?' done':'')+'" data-gid="'+esc(g.id)+'">'+
+        '<div class="gtop"><span class="gname">'+esc(g.name)+(done?'<span class="badge">達成🎉</span>':'')+'</span>'+
+        '<button class="gdel" data-act="delGoal" aria-label="目標を削除">✕</button></div>'+
+        '<div class="amt"><b>'+yen(s)+'</b> ／ '+yen(target)+'　'+(done?'（達成！）':'（残り '+yen(remain)+'）')+'</div>'+
+        '<div class="bar"><span style="width:'+pct+'%"></span></div>'+
+        '<div class="meta"><span>'+metaLeft+'</span><span>'+metaRight+'</span></div>'+
+        '<div class="cheer">'+esc(cheerText(pct,done))+'</div>'+
+        '<form class="addrow" data-act="addEntry"><input type="number" inputmode="numeric" min="1" step="1" placeholder="貯金する金額（円）" aria-label="入金額"><button class="btn btn-primary btn-sm" type="submit">貯金する</button></form>'+
+        hist+
+        '</div>';
+    }).join("");
+  }
+
+  // add goal
+  $("#addForm").addEventListener("submit",function(e){
+    e.preventDefault();
+    var name=$("#gname").value.trim();
+    var target=Math.floor(Number($("#gtarget").value));
+    var due=$("#gdue").value||"";
+    if(!name){ toast("目標名を入力してください"); return; }
+    if(!(target>0)){ toast("目標金額を入力してください"); return; }
+    goals.unshift({id:uid(),name:name,target:target,due:due,entries:[]});
+    save();
+    this.reset();
+    render();
+    toast("目標を追加しました");
+  });
+
+  // delegated actions on goals container
+  $("#goals").addEventListener("submit",function(e){
+    var form=e.target.closest('form[data-act="addEntry"]');
+    if(!form)return;
+    e.preventDefault();
+    var gid=form.closest(".goal").getAttribute("data-gid");
+    var g=goals.filter(function(x){return String(x.id)===String(gid);})[0];
+    if(!g)return;
+    var inp=form.querySelector("input");
+    var amt=Math.floor(Number(inp.value));
+    if(!(amt>0)){ toast("金額を入力してください"); return; }
+    var wasDone=saved(g)>=g.target;
+    g.entries=g.entries||[];
+    g.entries.push({id:uid(),amount:amt,at:new Date().toISOString()});
+    save();
+    var nowDone=saved(g)>=g.target;
+    render();
+    if(nowDone && !wasDone){ toast("🎉「"+g.name+"」の目標を達成しました！おめでとうございます！"); }
+    else{ toast(yen(amt)+" を貯金しました"); }
+  });
+
+  $("#goals").addEventListener("click",function(e){
+    var btn=e.target.closest("button[data-act]");
+    if(!btn)return;
+    var act=btn.getAttribute("data-act");
+    var goalEl=btn.closest(".goal");
+    var gid=goalEl.getAttribute("data-gid");
+    var g=goals.filter(function(x){return String(x.id)===String(gid);})[0];
+    if(!g)return;
+    if(act==="delGoal"){
+      if(confirm("目標「"+g.name+"」を、貯金の記録ごと削除します。よろしいですか？")){
+        goals=goals.filter(function(x){return String(x.id)!==String(gid);});
+        save(); render(); toast("目標を削除しました");
+      }
+    }else if(act==="delEntry"){
+      var li=btn.closest("li[data-eid]");
+      var eid=li.getAttribute("data-eid");
+      g.entries=(g.entries||[]).filter(function(x){return String(x.id)!==String(eid);});
+      save(); render(); toast("入金を取り消しました");
+    }
+  });
+
+  // settings modal
+  $("#gear").addEventListener("click",function(){$("#modal").classList.add("open");});
+  $("#closeModal").addEventListener("click",function(){$("#modal").classList.remove("open");});
+  $("#modal").addEventListener("click",function(e){if(e.target===this)this.classList.remove("open");});
+  $("#export").addEventListener("click",function(){
+    var data=JSON.stringify({goals:goals},null,2);
+    try{
+      var b=new Blob([data],{type:"application/json"});
+      var a=document.createElement("a");a.href=URL.createObjectURL(b);
+      a.download="sakidori-chokin-backup.json";a.click();
+    }catch(e){ prompt("以下をコピーして保存してください",data); }
+  });
+  $("#clear").addEventListener("click",function(){
+    if(confirm("すべての目標と貯金の記録を削除します。よろしいですか？")){
+      store.del(); goals=[]; render(); $("#modal").classList.remove("open"); toast("削除しました");
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

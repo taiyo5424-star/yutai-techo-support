@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e8683c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="お気に入りレシピをまとめてスクラップ。URLやメモ、評価で整理できます。">
+<title>レシピお気に入り帳｜お気に入りレシピをスクラップ</title>
+<style>
+  :root{
+    --accent:#e8683c; --accent-d:#cd512a; --accent-soft:#fdeee7;
+    --bg:#faf7f5; --card:#ffffff; --text:#2b2622; --sub:#8a827b;
+    --line:#eee6e0; --ok:#3fa66a; --warn:#e0952b; --danger:#d9534f;
+    --radius:16px; --shadow:0 2px 12px rgba(80,60,50,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#18140f; --card:#241e18; --text:#f2ece6; --sub:#a89f96;
+      --line:#372f27; --accent-soft:#3a2018; --shadow:0 2px 12px rgba(0,0,0,.4);}
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    padding-bottom:env(safe-area-inset-bottom);-webkit-text-size-adjust:100%}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--accent),var(--accent-d));
+    color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  header .ico{font-size:24px;line-height:1}
+  header h1{font-size:18px;margin:0;font-weight:700;flex:1}
+  header button.gear{background:rgba(255,255,255,.2);border:0;color:#fff;font-size:18px;
+    width:36px;height:36px;border-radius:50%;cursor:pointer}
+  main{max-width:640px;margin:0 auto;padding:16px 16px 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  h2{font-size:15px;margin:0 0 12px;color:var(--sub);font-weight:700;letter-spacing:.02em}
+  .btn{appearance:none;border:0;border-radius:12px;padding:13px 18px;font-size:16px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:transform .05s,filter .15s;width:100%}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:var(--accent-soft);color:var(--accent-d)}
+  .btn-sm{width:auto;padding:8px 14px;font-size:14px;border-radius:10px}
+  label{display:block;font-size:13px;color:var(--sub);font-weight:600;margin:0 0 4px}
+  input,select,textarea{font-family:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--card);color:var(--text);width:100%}
+  textarea{resize:vertical;min-height:70px;line-height:1.5}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+  .field{margin-bottom:10px}
+  .search{position:relative}
+  .search input{padding-left:38px}
+  .search .mag{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--sub);font-size:15px;pointer-events:none}
+  .stars{display:inline-flex;gap:2px}
+  .stars button{background:none;border:0;font-size:26px;line-height:1;cursor:pointer;padding:0 2px;color:var(--line);font-family:inherit}
+  .stars button.on{color:#f5a623}
+  .stars .clr{font-size:13px;color:var(--sub);align-self:center;margin-left:6px;padding:2px 6px}
+  .recipe{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+  .recipe .top{display:flex;align-items:flex-start;gap:10px}
+  .recipe .title{flex:1;font-size:17px;font-weight:700;word-break:break-word;margin:0}
+  .recipe .rate{color:#f5a623;font-size:15px;white-space:nowrap;letter-spacing:1px}
+  .recipe .note{font-size:14px;color:var(--text);white-space:pre-wrap;word-break:break-word;margin:8px 0 0}
+  .recipe .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .recipe .tags .t{font-size:12px;color:var(--accent-d);background:var(--accent-soft);padding:3px 10px;border-radius:20px}
+  .recipe .acts{display:flex;gap:8px;margin-top:12px;align-items:center}
+  .recipe .open{flex:1}
+  .link{display:inline-block;text-align:center;text-decoration:none;background:var(--accent-soft);color:var(--accent-d);
+    font-weight:700;font-size:14px;padding:9px 14px;border-radius:10px;width:100%}
+  .iconbtn{background:none;border:1px solid var(--line);border-radius:10px;font-size:16px;cursor:pointer;
+    padding:8px 12px;color:var(--sub);font-family:inherit}
+  .iconbtn.del{color:var(--danger)}
+  .empty{text-align:center;color:var(--sub);padding:24px 8px;font-size:14px}
+  .ad-slot{margin:16px auto;max-width:640px;min-height:56px;border:1px dashed var(--line);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;background:var(--card)}
+  footer{max-width:640px;margin:0 auto;padding:18px 16px 34px;color:var(--sub);font-size:12px;text-align:center}
+  footer a{color:var(--sub)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+  .modal.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))}
+  .sheet h3{margin:0 0 12px;font-size:17px}
+  .sheet .btn{margin-top:8px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#2b2622;color:#fff;
+    padding:10px 18px;border-radius:22px;font-size:14px;opacity:0;transition:.25s;z-index:99;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <span class="ico">📖</span>
+  <h1>レシピお気に入り帳</h1>
+  <button class="gear" id="gear" aria-label="設定">⚙️</button>
+</header>
+
+<main>
+  <div class="card">
+    <h2 id="formTitle">レシピを追加</h2>
+    <form id="addForm" autocomplete="off">
+      <div class="field">
+        <label for="name">料理名（必須）</label>
+        <input id="name" placeholder="例：鶏むね肉のやわらか照り焼き" maxlength="60" required>
+      </div>
+      <div class="field">
+        <label for="url">URL（任意）</label>
+        <input id="url" type="url" inputmode="url" placeholder="https://..." maxlength="500">
+      </div>
+      <div class="field">
+        <label for="note">メモ・材料（任意）</label>
+        <textarea id="note" placeholder="材料や手順のメモ、家族の感想など" maxlength="2000"></textarea>
+      </div>
+      <div class="field">
+        <label>評価（任意）</label>
+        <div class="stars" id="stars">
+          <button type="button" data-v="1" aria-label="星1">★</button>
+          <button type="button" data-v="2" aria-label="星2">★</button>
+          <button type="button" data-v="3" aria-label="星3">★</button>
+          <button type="button" data-v="4" aria-label="星4">★</button>
+          <button type="button" data-v="5" aria-label="星5">★</button>
+          <span class="clr" id="clearStars" role="button">クリア</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="tags">タグ（任意・カンマ区切り）</label>
+        <input id="tags" placeholder="例：時短, 節約, 子ども" maxlength="120">
+      </div>
+      <button class="btn btn-primary" type="submit" id="submitBtn">追加する</button>
+      <button class="btn btn-ghost" type="button" id="cancelEdit" style="display:none;margin-top:8px">編集をやめる</button>
+    </form>
+  </div>
+
+  <div class="ad-slot"><!-- AdMob等の広告をここに表示 -->広告スペース</div>
+
+  <div class="card">
+    <div class="search">
+      <span class="mag">🔍</span>
+      <input id="search" placeholder="料理名・メモ・タグで検索" maxlength="40">
+    </div>
+  </div>
+
+  <div id="listWrap">
+    <div id="list"></div>
+    <p class="empty" id="empty">まだレシピがありません。お気に入りのレシピを名前やURL、メモで登録して、あとから探しやすくスクラップしましょう。</p>
+  </div>
+</main>
+
+<footer>
+  <p>データはこの端末内にのみ保存されます。外部送信はありません。</p>
+  <p><a href="../../privacy-recipe-note.html">プライバシーポリシー</a>　|　<a href="../index.html">アプリ一覧</a></p>
+  <p>© レシピお気に入り帳</p>
+</footer>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3>設定</h3>
+    <button class="btn btn-ghost" id="export">データを書き出す（バックアップ）</button>
+    <button class="btn btn-ghost" id="closeModal">閉じる</button>
+    <button class="btn" id="clear" style="background:var(--danger);color:#fff">すべてのデータを削除</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="recipe-note";
+  // ---- storage helper (shared pattern across all apps) ----
+  var store={
+    get:function(k,d){ try{var v=localStorage.getItem(KEY+":"+k);return v==null?d:JSON.parse(v);}catch(e){return d;} },
+    set:function(k,v){ try{localStorage.setItem(KEY+":"+k,JSON.stringify(v));}catch(e){} },
+    del:function(){ try{Object.keys(localStorage).forEach(function(x){if(x.indexOf(KEY+":")===0)localStorage.removeItem(x);});}catch(e){} }
+  };
+  function $(s){return document.querySelector(s);}
+  function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show");},1800);}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+  var items=store.get("items",[]);   // {id,name,url,note,rate,tags:[]}
+  var rating=0;       // current form rating
+  var editId=null;    // id being edited, or null
+  var query="";
+
+  function save(){ store.set("items",items); }
+
+  function safeUrl(u){
+    u=(u||"").trim(); if(!u)return "";
+    if(/^https?:\/\//i.test(u)) return u;
+    if(/^[\w.-]+\.[a-z]{2,}(\/|$)/i.test(u)) return "https://"+u;
+    return ""; // reject javascript: and other schemes
+  }
+  function parseTags(s){
+    return String(s||"").split(/[,、]/).map(function(t){return t.trim();}).filter(function(t){return t;}).slice(0,10);
+  }
+  function paintStars(){
+    Array.prototype.forEach.call(document.querySelectorAll("#stars button"),function(b){
+      b.classList.toggle("on", parseInt(b.getAttribute("data-v"),10)<=rating);
+    });
+  }
+  function starStr(n){ n=n||0; var s=""; for(var i=0;i<5;i++)s+= i<n?"★":"☆"; return s; }
+
+  function matches(it){
+    if(!query) return true;
+    var hay=(it.name+" "+(it.note||"")+" "+(it.tags||[]).join(" ")).toLowerCase();
+    return hay.indexOf(query)>=0;
+  }
+
+  function render(){
+    var view=items.filter(matches);
+    var empty=$("#empty");
+    empty.style.display=view.length?"none":"block";
+    if(!view.length && items.length){ empty.textContent="「"+query+"」に一致するレシピはありません。"; }
+    else{ empty.textContent="まだレシピがありません。お気に入りのレシピを名前やURL、メモで登録して、あとから探しやすくスクラップしましょう。"; }
+
+    $("#list").innerHTML=view.map(function(it){
+      var url=safeUrl(it.url);
+      var html='<div class="recipe" data-id="'+it.id+'">'+
+        '<div class="top">'+
+          '<h3 class="title">'+esc(it.name)+'</h3>'+
+          (it.rate?'<span class="rate" aria-label="評価'+it.rate+'">'+starStr(it.rate)+'</span>':'')+
+        '</div>';
+      if(it.note) html+='<p class="note">'+esc(it.note)+'</p>';
+      if(it.tags&&it.tags.length){
+        html+='<div class="tags">'+it.tags.map(function(t){return '<span class="t">#'+esc(t)+'</span>';}).join("")+'</div>';
+      }
+      html+='<div class="acts">';
+      if(url) html+='<span class="open"><a class="link" href="'+esc(url)+'" target="_blank" rel="noopener">レシピを開く ↗</a></span>';
+      html+='<button class="iconbtn edit" aria-label="編集">✏️</button>'+
+            '<button class="iconbtn del" aria-label="削除">🗑</button>'+
+        '</div></div>';
+      return html;
+    }).join("");
+  }
+
+  function resetForm(){
+    editId=null; rating=0; paintStars();
+    $("#name").value=""; $("#url").value=""; $("#note").value=""; $("#tags").value="";
+    $("#formTitle").textContent="レシピを追加";
+    $("#submitBtn").textContent="追加する";
+    $("#cancelEdit").style.display="none";
+  }
+
+  // stars
+  $("#stars").addEventListener("click",function(e){
+    var b=e.target.closest("button[data-v]"); if(!b)return;
+    var v=parseInt(b.getAttribute("data-v"),10);
+    rating = (rating===v)? v-1 : v;  // tapping same star toggles down
+    paintStars();
+  });
+  $("#clearStars").addEventListener("click",function(){ rating=0; paintStars(); });
+
+  // add / update
+  $("#addForm").addEventListener("submit",function(e){
+    e.preventDefault();
+    var name=$("#name").value.trim(); if(!name){ toast("料理名を入力してください"); return; }
+    var rec={
+      name:name,
+      url:$("#url").value.trim(),
+      note:$("#note").value.trim(),
+      rate:rating,
+      tags:parseTags($("#tags").value)
+    };
+    if(editId!=null){
+      items=items.map(function(it){ return String(it.id)===String(editId) ? Object.assign({},it,rec) : it; });
+      save(); resetForm(); render(); toast("更新しました");
+    }else{
+      rec.id=Date.now()+"-"+Math.floor(performance.now());
+      items.unshift(rec);
+      save(); resetForm(); render(); toast("追加しました");
+    }
+    try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(_){}
+  });
+
+  $("#cancelEdit").addEventListener("click",function(){ resetForm(); });
+
+  // list actions (edit / delete)
+  $("#list").addEventListener("click",function(e){
+    var card=e.target.closest(".recipe"); if(!card)return;
+    var id=card.getAttribute("data-id");
+    if(e.target.classList.contains("del")){
+      items=items.filter(function(i){return String(i.id)!==String(id);});
+      if(String(editId)===String(id)) resetForm();
+      save(); render(); return;
+    }
+    if(e.target.classList.contains("edit")){
+      var it=items.filter(function(i){return String(i.id)===String(id);})[0];
+      if(!it)return;
+      editId=it.id; rating=it.rate||0;
+      $("#name").value=it.name; $("#url").value=it.url||""; $("#note").value=it.note||"";
+      $("#tags").value=(it.tags||[]).join(", ");
+      paintStars();
+      $("#formTitle").textContent="レシピを編集";
+      $("#submitBtn").textContent="更新する";
+      $("#cancelEdit").style.display="block";
+      try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(_){}
+      $("#name").focus();
+    }
+  });
+
+  // search
+  $("#search").addEventListener("input",function(){ query=this.value.trim().toLowerCase(); render(); });
+
+  // settings modal
+  $("#gear").addEventListener("click",function(){$("#modal").classList.add("open");});
+  $("#closeModal").addEventListener("click",function(){$("#modal").classList.remove("open");});
+  $("#modal").addEventListener("click",function(e){if(e.target===this)this.classList.remove("open");});
+  $("#export").addEventListener("click",function(){
+    var data=JSON.stringify({items:items},null,2);
+    try{
+      var b=new Blob([data],{type:"application/json"});
+      var a=document.createElement("a");a.href=URL.createObjectURL(b);
+      a.download="recipe-note-backup.json";a.click();
+    }catch(e){ prompt("以下をコピーして保存してください",data); }
+  });
+  $("#clear").addEventListener("click",function(){
+    if(confirm("すべてのレシピを削除します。よろしいですか？")){
+      store.del(); items=[]; query=""; $("#search").value=""; resetForm();
+      render(); $("#modal").classList.remove("open"); toast("削除しました");
+    }
+  });
+
+  paintStars();
+  render();
+})();
+</script>
+</body>
+</html>

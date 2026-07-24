@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3aa0e0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="洗濯表示マークの意味をすぐ検索。洗濯・乾燥・アイロンのコツもわかります。">
+<title>洗濯表示ガイド｜ケアマーク早見表</title>
+<style>
+  :root{
+    --accent:#3aa0e0; --accent-d:#2c80b8; --accent-soft:#e9f4fc;
+    --bg:#faf7f5; --card:#ffffff; --text:#2b2622; --sub:#8a827b;
+    --line:#eee6e0; --ok:#3fa66a; --warn:#e0952b; --danger:#d9534f;
+    --radius:16px; --shadow:0 2px 12px rgba(80,60,50,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#18140f; --card:#241e18; --text:#f2ece6; --sub:#a89f96;
+      --line:#372f27; --accent-soft:#172c3a; --shadow:0 2px 12px rgba(0,0,0,.4);}
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    padding-bottom:env(safe-area-inset-bottom);-webkit-text-size-adjust:100%}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--accent),var(--accent-d));
+    color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  header .ico{font-size:24px;line-height:1}
+  header h1{font-size:18px;margin:0;font-weight:700;flex:1}
+  header button.gear{background:rgba(255,255,255,.2);border:0;color:#fff;font-size:18px;
+    width:36px;height:36px;border-radius:50%;cursor:pointer}
+  main{max-width:640px;margin:0 auto;padding:16px 16px 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  h2{font-size:15px;margin:0 0 12px;color:var(--sub);font-weight:700;letter-spacing:.02em}
+  .btn{appearance:none;border:0;border-radius:12px;padding:13px 18px;font-size:16px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:transform .05s,filter .15s;width:100%}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:var(--accent-soft);color:var(--accent-d)}
+  .btn-sm{width:auto;padding:8px 14px;font-size:14px;border-radius:10px}
+  input,select,textarea{font-family:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--card);color:var(--text);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+  .row{display:flex;gap:8px;align-items:center}
+  ul.list{list-style:none;margin:0;padding:0}
+  .empty{text-align:center;color:var(--sub);padding:20px 8px;font-size:14px}
+  .ad-slot{margin:16px auto;max-width:640px;min-height:56px;border:1px dashed var(--line);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;background:var(--card)}
+  footer{max-width:640px;margin:0 auto;padding:18px 16px 34px;color:var(--sub);font-size:12px;text-align:center}
+  footer a{color:var(--sub)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+  .modal.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))}
+  .sheet h3{margin:0 0 12px;font-size:17px}
+  .sheet .btn{margin-top:8px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#2b2622;color:#fff;
+    padding:10px 18px;border-radius:22px;font-size:14px;opacity:0;transition:.25s;z-index:99;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* ---- sentaku-guide specific ---- */
+  .search{margin-bottom:12px}
+  .tabs{display:flex;gap:7px;overflow-x:auto;padding:2px 0 4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{flex:0 0 auto;border:1px solid var(--line);background:var(--card);color:var(--sub);
+    padding:7px 14px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .mrow{display:flex;gap:13px;align-items:flex-start;padding:13px 2px;border-bottom:1px solid var(--line)}
+  .mrow:last-child{border-bottom:0}
+  .micon{flex:0 0 auto;width:56px;height:56px;color:var(--text);
+    display:flex;align-items:center;justify-content:center;
+    background:var(--accent-soft);border-radius:12px;padding:5px}
+  .mark{width:100%;height:100%;display:block}
+  .mark .ln{fill:none;stroke:currentColor;stroke-width:5;stroke-linejoin:round;stroke-linecap:round}
+  .mark .cr{fill:none;stroke:var(--danger);stroke-width:6;stroke-linecap:round}
+  .mark .dot{fill:currentColor}
+  .mark .tx{fill:currentColor;font-size:26px;font-weight:700;font-family:system-ui,sans-serif}
+  .mark .emj{font-size:30px}
+  .minfo{flex:1;min-width:0}
+  .mname{font-weight:700;font-size:15px;word-break:break-word}
+  .mdesc{font-size:13.5px;color:var(--sub);margin-top:2px}
+  .mcat{display:inline-block;font-size:11px;color:var(--accent-d);background:var(--accent-soft);
+    padding:1px 9px;border-radius:20px;margin-top:6px;font-weight:700}
+  .tips{margin:0;padding-left:0;list-style:none}
+  .tips li{position:relative;padding:8px 0 8px 26px;border-bottom:1px solid var(--line);font-size:14px}
+  .tips li:last-child{border-bottom:0}
+  .tips li::before{content:"💡";position:absolute;left:0;top:8px}
+  .memo textarea{min-height:82px;resize:vertical;line-height:1.5}
+  .memo .row2{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px}
+  .memo small{color:var(--sub);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <span class="ico">🧺</span>
+  <h1>洗濯表示ガイド</h1>
+  <button class="gear" id="gear" aria-label="設定">⚙️</button>
+</header>
+
+<main>
+  <div class="card">
+    <h2>マークを調べる</h2>
+    <input class="search" id="search" type="search" placeholder="🔍 名称や意味で検索（例：40、乾燥、アイロン）" autocomplete="off">
+    <div class="tabs" id="tabs"></div>
+  </div>
+
+  <div class="card">
+    <h2>ケアマーク一覧（<span id="count">0</span>件）</h2>
+    <ul class="list" id="list"></ul>
+    <p class="empty" id="empty" style="display:none">該当するマークが見つかりません。別のことばで探してみてください。</p>
+  </div>
+
+  <div class="ad-slot"><!-- AdMob等の広告をここに表示 -->広告スペース</div>
+
+  <div class="card">
+    <h2>洗濯のコツ・ミニ知識</h2>
+    <ul class="tips">
+      <li>洗濯表示は「桶＝洗い方」「三角＝漂白」「四角＝乾燥」「アイロン＝アイロン」「丸＝クリーニング」の5グループで覚えると早いです。</li>
+      <li>数字は液温の上限（℃）。バー（横線）が多いほど「やさしく洗う」の合図です。</li>
+      <li>色柄物は色落ちしやすいので、酸素系漂白剤を選ぶと安心。塩素系は白物専用と覚えましょう。</li>
+      <li>タオルやジーンズは裏返して洗うと、毛羽立ちや色あせを抑えられます。</li>
+      <li>ニット類は平干しに。ハンガーだと肩や裾が伸びてしまいます。</li>
+      <li>アイロンの点（●）は温度の目安。点が多いほど高温です。心配なときは当て布を。</li>
+    </ul>
+  </div>
+
+  <div class="card memo">
+    <h2>自分用メモ</h2>
+    <textarea id="memo" placeholder="お気に入りの服の洗い方や、家族の服のクセなどを自由にメモできます。（この端末にだけ保存されます）"></textarea>
+    <div class="row2">
+      <small id="memoState">　</small>
+      <button class="btn btn-ghost btn-sm" id="memoSave" type="button">メモを保存</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p>データはこの端末内にのみ保存されます。外部送信はありません。</p>
+  <p><a href="../../privacy-sentaku-guide.html">プライバシーポリシー</a>　|　<a href="../index.html">アプリ一覧</a></p>
+  <p>© 洗濯表示ガイド</p>
+</footer>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3>設定</h3>
+    <button class="btn btn-ghost" id="export">データを書き出す（バックアップ）</button>
+    <button class="btn btn-ghost" id="closeModal">閉じる</button>
+    <button class="btn" id="clear" style="background:var(--danger);color:#fff">すべてのデータを削除</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="sentaku-guide";
+  // ---- storage helper (shared pattern across all apps) ----
+  var store={
+    get:function(k,d){ try{var v=localStorage.getItem(KEY+":"+k);return v==null?d:JSON.parse(v);}catch(e){return d;} },
+    set:function(k,v){ try{localStorage.setItem(KEY+":"+k,JSON.stringify(v));}catch(e){} },
+    del:function(){ try{Object.keys(localStorage).forEach(function(x){if(x.indexOf(KEY+":")===0)localStorage.removeItem(x);});}catch(e){} }
+  };
+  function $(s){return document.querySelector(s);}
+  function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show");},1800);}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+  // ---- inline SVG care-mark builders (no external images) ----
+  var G={
+    tub:'<path class="ln" d="M12 44 C22 37 30 50 40 44 C50 39 58 50 66 44 C76 38 82 48 88 44 L81 79 Q79 83 75 83 L25 83 Q21 83 19 79 Z"/>',
+    tri:'<path class="ln" d="M50 20 L86 82 L14 82 Z"/>',
+    sq:'<rect class="ln" x="18" y="22" width="64" height="64" rx="3"/>',
+    iron:'<path class="ln" d="M16 70 L86 54 Q92 53 90 62 L87 74 Q86 78 81 78 L22 78 Q16 78 16 72 Z"/><path class="ln" d="M16 70 L9 63"/>',
+    circle:'<circle class="ln" cx="50" cy="53" r="33"/>'
+  };
+  function wrap(inner){ return '<svg class="mark" viewBox="0 0 100 100" aria-hidden="true">'+inner+'</svg>'; }
+  function cross(){ return '<path class="cr" d="M14 16 L86 86 M86 16 L14 86"/>'; }
+  function tubNum(n){ return G.tub+'<text class="tx" x="50" y="72" text-anchor="middle">'+n+'</text>'; }
+  function bars(n){ var s='',i,y; for(i=0;i<n;i++){ y=89+i*7; s+='<line class="ln" x1="30" y1="'+y+'" x2="70" y2="'+y+'"/>'; } return s; }
+  function tumbleDots(n){ var xs=n===1?[50]:[43,57],s='',i; for(i=0;i<n;i++){ s+='<circle class="dot" cx="'+xs[i]+'" cy="54" r="3.4"/>'; } return s; }
+  function ironDots(n){ var xs=n===1?[50]:n===2?[42,58]:[36,50,64],s='',i; for(i=0;i<n;i++){ s+='<circle class="dot" cx="'+xs[i]+'" cy="65" r="3"/>'; } return s; }
+  var tumbleCircle='<circle class="ln" cx="50" cy="54" r="15"/>';
+  function circleLetter(ch){ return G.circle+'<text class="tx" x="50" y="63" text-anchor="middle">'+ch+'</text>'; }
+
+  // ---- built-in care-mark data (新JISケアマークに準拠した説明) ----
+  var DATA=[
+    { cat:"家庭洗濯", items:[
+      { svg:tubNum("40"), name:"洗濯機（40℃・標準）", desc:"液温は40℃を上限に、洗濯機で通常の洗い方ができます。ふだん着の多くがこれです。" },
+      { svg:tubNum("40")+bars(1), name:"洗濯機（40℃・弱く）", desc:"液温40℃を上限に、洗濯機の弱水流（弱・ドライコース等）で弱く洗います。" },
+      { svg:tubNum("30")+bars(2), name:"洗濯機（30℃・非常に弱く）", desc:"液温30℃を上限に、手洗いコースなど非常に弱い洗い方をします。デリケート衣類向け。" },
+      { svg:G.tub+'<text class="emj" x="50" y="70" text-anchor="middle">✋</text>', name:"手洗いができる", desc:"液温40℃を上限に、やさしく手洗いできます。もみ洗い・こすり洗い・強くしぼるのは避けます。" },
+      { svg:tubNum("60"), name:"洗濯機（60℃まで）", desc:"液温60℃を上限に洗濯機で洗えます。タオルや肌着など丈夫な綿製品に多い表示です。" },
+      { svg:G.tub+cross(), name:"家庭での洗濯禁止", desc:"家庭での水洗いはできません。型くずれや縮みの原因に。クリーニング店に相談しましょう。" }
+    ]},
+    { cat:"漂白", items:[
+      { svg:G.tri, name:"漂白できる（塩素系・酸素系）", desc:"塩素系・酸素系のどちらの漂白剤でも漂白できます。白物の白さを保ちたいときに。" },
+      { svg:G.tri+'<line class="ln" x1="24" y1="54" x2="46" y2="30"/><line class="ln" x1="40" y1="66" x2="66" y2="38"/>', name:"酸素系のみ漂白できる", desc:"酸素系漂白剤は使えますが、塩素系漂白剤は使えません。色柄物に安心して使えます。" },
+      { svg:G.tri+cross(), name:"漂白できない", desc:"塩素系・酸素系ともに漂白剤は使用できません。しみ抜きは部分洗いや専門店で。" },
+      { svg:G.tri+'<text class="tx" x="50" y="74" text-anchor="middle" style="font-size:30px">!</text>', name:"ワンポイント：漂白剤の選び方", desc:"色柄物には酸素系、白物には塩素系が基本。使う前に必ず目立たない所で色落ちを確認しましょう。" }
+    ]},
+    { cat:"乾燥", items:[
+      { svg:G.sq+tumbleCircle+tumbleDots(2), name:"タンブル乾燥できる（高温）", desc:"排気温度の上限は約80℃。乾燥機（タンブル乾燥）が使えます。" },
+      { svg:G.sq+tumbleCircle+tumbleDots(1), name:"タンブル乾燥できる（低温）", desc:"排気温度の上限は約60℃の低温設定で乾燥機が使えます。縮みやすい衣類向け。" },
+      { svg:G.sq+tumbleCircle+cross(), name:"タンブル乾燥禁止", desc:"乾燥機（タンブル乾燥）は使えません。縮みや傷みの原因になります。自然乾燥にしましょう。" },
+      { svg:G.sq+'<line class="ln" x1="50" y1="30" x2="50" y2="78"/>', name:"つり干しがよい", desc:"洗濯後、ハンガーなどにかけて吊り干しします。四角の中の縦線が「吊るす」の合図です。" },
+      { svg:G.sq+'<line class="ln" x1="28" y1="54" x2="72" y2="54"/>', name:"平干しがよい", desc:"平らな場所に広げて干します。ニットやセーターなど、伸びやすい衣類はこの表示です。" },
+      { svg:G.sq+'<line class="ln" x1="50" y1="30" x2="50" y2="78"/><line class="ln" x1="24" y1="26" x2="40" y2="42"/>', name:"日陰でのつり干しがよい", desc:"直射日光を避け、日陰で吊り干しします。左上の斜線が「日陰」を表します。色あせ防止に。" },
+      { svg:G.sq+'<line class="ln" x1="41" y1="30" x2="41" y2="78"/><line class="ln" x1="59" y1="30" x2="59" y2="78"/>', name:"ぬれつり干しがよい", desc:"脱水せず、ぬれたまま吊り干しします。しわや型くずれを防ぎたい衣類向けです。" }
+    ]},
+    { cat:"アイロン", items:[
+      { svg:G.iron+ironDots(3), name:"高温（200℃まで）", desc:"底面温度200℃を上限にアイロンがけできます。綿・麻など丈夫な素材向け。点3つが高温の合図。" },
+      { svg:G.iron+ironDots(2), name:"中温（150℃まで）", desc:"底面温度150℃を上限にアイロンがけできます。ウールやポリエステルなどに。" },
+      { svg:G.iron+ironDots(1), name:"低温（110℃まで）", desc:"底面温度110℃を上限。スチームは使わない方が安心です。ナイロン・アクリルなどデリケート素材に。" },
+      { svg:G.iron+cross(), name:"アイロン禁止", desc:"アイロンがけはできません。熱でとけたり縮んだりする素材です。しわは吊り干しや蒸気で伸ばして。" },
+      { svg:G.iron, name:"ワンポイント：当て布", desc:"テカリが心配な素材や高温がけのときは、あて布をすると生地を傷めにくくなります。裏側からかけるのも有効。" }
+    ]},
+    { cat:"クリーニング", items:[
+      { svg:circleLetter("P"), name:"ドライクリーニングできる（パークロロエチレン系）", desc:"パークロロエチレンおよび石油系溶剤でのドライクリーニングができます。クリーニング店向けの表示です。" },
+      { svg:circleLetter("F"), name:"ドライクリーニングできる（石油系）", desc:"石油系溶剤でのドライクリーニングができます。デリケートな衣類に多い表示です。" },
+      { svg:G.circle+cross(), name:"ドライクリーニング禁止", desc:"ドライクリーニングはできません。溶剤で傷む素材です。表示に合った方法で洗いましょう。" },
+      { svg:circleLetter("W"), name:"ウェットクリーニングできる", desc:"専門店による特殊な水洗い（ウェットクリーニング）ができます。丸の中のWが目印です。" },
+      { svg:circleLetter("W")+cross(), name:"ウェットクリーニング禁止", desc:"専門店の水洗い（ウェットクリーニング）はできません。他の表示に従って手入れします。" },
+      { svg:circleLetter("F")+bars(1), name:"弱いドライクリーニング", desc:"石油系溶剤で、弱い操作のドライクリーニングができます。バーは「やさしく」の合図です。" }
+    ]}
+  ];
+
+  var CATS=["すべて"].concat(DATA.map(function(g){return g.cat;}));
+  var curCat="すべて";
+  var query="";
+
+  // build tabs
+  (function(){
+    var box=$("#tabs");
+    box.innerHTML=CATS.map(function(c){
+      return '<button class="tab'+(c===curCat?' active':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'</button>';
+    }).join("");
+  })();
+
+  function matches(it){
+    var okCat=(curCat==="すべて"||it._cat===curCat);
+    if(!okCat)return false;
+    if(!query)return true;
+    var q=query.toLowerCase();
+    return (it.name.toLowerCase().indexOf(q)>=0)||(it.desc.toLowerCase().indexOf(q)>=0);
+  }
+
+  function allItems(){
+    var arr=[];
+    DATA.forEach(function(g){ g.items.forEach(function(it){ arr.push({_cat:g.cat,name:it.name,desc:it.desc,svg:it.svg}); }); });
+    return arr;
+  }
+
+  function render(){
+    var items=allItems().filter(matches);
+    $("#count").textContent=items.length;
+    var list=$("#list"), empty=$("#empty");
+    empty.style.display=items.length?"none":"block";
+    list.innerHTML=items.map(function(it){
+      return '<li class="mrow"><div class="micon">'+wrap(it.svg)+'</div>'+
+        '<div class="minfo"><div class="mname">'+esc(it.name)+'</div>'+
+        '<div class="mdesc">'+esc(it.desc)+'</div>'+
+        '<span class="mcat">'+esc(it._cat)+'</span></div></li>';
+    }).join("");
+  }
+
+  // tabs
+  $("#tabs").addEventListener("click",function(e){
+    var b=e.target.closest(".tab"); if(!b)return;
+    curCat=b.getAttribute("data-cat");
+    Array.prototype.forEach.call(this.children,function(x){x.classList.toggle("active",x===b);});
+    render();
+  });
+  // search
+  $("#search").addEventListener("input",function(){ query=this.value.trim(); render(); });
+
+  // ---- memo (localStorage) ----
+  var memoEl=$("#memo");
+  memoEl.value=store.get("memo","");
+  function saveMemo(silent){
+    store.set("memo",memoEl.value);
+    $("#memoState").textContent="保存しました "+timeLabel();
+    if(!silent)toast("メモを保存しました");
+  }
+  function timeLabel(){ var d=new Date(); function p(n){return(n<10?"0":"")+n;} return p(d.getHours())+":"+p(d.getMinutes()); }
+  $("#memoSave").addEventListener("click",function(){ saveMemo(false); });
+  memoEl.addEventListener("input",function(){ clearTimeout(memoEl._t); memoEl._t=setTimeout(function(){ saveMemo(true); },700); });
+
+  // ---- settings modal ----
+  $("#gear").addEventListener("click",function(){$("#modal").classList.add("open");});
+  $("#closeModal").addEventListener("click",function(){$("#modal").classList.remove("open");});
+  $("#modal").addEventListener("click",function(e){if(e.target===this)this.classList.remove("open");});
+  $("#export").addEventListener("click",function(){
+    var data=JSON.stringify({memo:store.get("memo","")},null,2);
+    try{
+      var b=new Blob([data],{type:"application/json"});
+      var a=document.createElement("a");a.href=URL.createObjectURL(b);
+      a.download="sentaku-guide-backup.json";a.click();
+    }catch(e){ prompt("以下をコピーして保存してください",data); }
+  });
+  $("#clear").addEventListener("click",function(){
+    if(confirm("保存したメモを削除します。よろしいですか？")){
+      store.del();
+      memoEl.value="";
+      $("#memoState").textContent="　";
+      $("#modal").classList.remove("open");
+      toast("削除しました");
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

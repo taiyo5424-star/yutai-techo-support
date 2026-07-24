@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#c08a2d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="常備菜・作り置きの作った日と日持ちを記録。食べ切り目安がわかります。">
+<title>作り置きメモ｜常備菜の食べ切り管理</title>
+<style>
+  :root{
+    --accent:#c08a2d; --accent-d:#a17322; --accent-soft:#f8f1e2;
+    --bg:#faf7f5; --card:#ffffff; --text:#2b2622; --sub:#8a827b;
+    --line:#eee6e0; --ok:#3fa66a; --warn:#e0952b; --danger:#d9534f;
+    --radius:16px; --shadow:0 2px 12px rgba(80,60,50,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#18140f; --card:#241e18; --text:#f2ece6; --sub:#a89f96;
+      --line:#372f27; --accent-soft:#332a17; --shadow:0 2px 12px rgba(0,0,0,.4);}
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    padding-bottom:env(safe-area-inset-bottom);-webkit-text-size-adjust:100%}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--accent),var(--accent-d));
+    color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  header .ico{font-size:24px;line-height:1}
+  header h1{font-size:18px;margin:0;font-weight:700;flex:1}
+  header button.gear{background:rgba(255,255,255,.2);border:0;color:#fff;font-size:18px;
+    width:36px;height:36px;border-radius:50%;cursor:pointer}
+  main{max-width:640px;margin:0 auto;padding:16px 16px 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  h2{font-size:15px;margin:0 0 12px;color:var(--sub);font-weight:700;letter-spacing:.02em}
+  .btn{appearance:none;border:0;border-radius:12px;padding:13px 18px;font-size:16px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:transform .05s,filter .15s;width:100%}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:var(--accent-soft);color:var(--accent-d)}
+  .btn-sm{width:auto;padding:8px 14px;font-size:14px;border-radius:10px}
+  label{display:block;font-size:13px;color:var(--sub);font-weight:600;margin:0 0 4px}
+  input,select,textarea{font-family:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--card);color:var(--text);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+  .row{display:flex;gap:8px;align-items:center}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .form-grid .full{grid-column:1 / -1}
+  .empty{text-align:center;color:var(--sub);padding:24px 8px;font-size:14px}
+  .empty .big{font-size:34px;display:block;margin-bottom:8px}
+  /* item list */
+  ul.list{list-style:none;margin:0;padding:0}
+  ul.list li.item{display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--line)}
+  ul.list li.item:last-child{border-bottom:0}
+  .item .body{flex:1;min-width:0}
+  .item .name{font-weight:700;font-size:16px;word-break:break-word}
+  .item .meta{font-size:12px;color:var(--sub);margin-top:2px}
+  .item .meta .qty{color:var(--accent-d);font-weight:700}
+  .item .acts{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+  .badge{display:inline-block;font-size:13px;font-weight:800;padding:4px 12px;border-radius:20px;white-space:nowrap;
+    background:var(--accent-soft);color:var(--accent-d)}
+  .badge.ok{background:rgba(63,166,106,.14);color:var(--ok)}
+  .badge.warn{background:rgba(224,149,43,.16);color:var(--warn)}
+  .badge.danger{background:rgba(217,83,79,.15);color:var(--danger)}
+  .badge.over{background:var(--danger);color:#fff}
+  .eat{background:var(--accent-soft);color:var(--accent-d);border:0;border-radius:10px;
+    padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .eat:active{transform:scale(.97)}
+  .del{background:none;border:0;color:var(--danger);font-size:18px;cursor:pointer;padding:2px 6px}
+  .ad-slot{margin:16px auto;max-width:640px;min-height:56px;border:1px dashed var(--line);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;background:var(--card)}
+  footer{max-width:640px;margin:0 auto;padding:18px 16px 34px;color:var(--sub);font-size:12px;text-align:center}
+  footer a{color:var(--sub)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+  .modal.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))}
+  .sheet h3{margin:0 0 12px;font-size:17px}
+  .sheet .btn{margin-top:8px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#2b2622;color:#fff;
+    padding:10px 18px;border-radius:22px;font-size:14px;opacity:0;transition:.25s;z-index:99;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <span class="ico">🥡</span>
+  <h1>作り置きメモ</h1>
+  <button class="gear" id="gear" aria-label="設定">⚙️</button>
+</header>
+
+<main>
+  <div class="card">
+    <h2>作り置きを追加</h2>
+    <form id="addForm" autocomplete="off">
+      <div class="form-grid">
+        <div class="full">
+          <label for="name">料理名</label>
+          <input id="name" placeholder="例：ひじきの煮物" maxlength="30" required>
+        </div>
+        <div>
+          <label for="made">作った日</label>
+          <input id="made" type="date" required>
+        </div>
+        <div>
+          <label for="days">日持ち日数</label>
+          <input id="days" type="number" inputmode="numeric" min="1" max="365" placeholder="例：3" required>
+        </div>
+        <div class="full">
+          <label for="qty">残り個数・食数（任意）</label>
+          <input id="qty" type="number" inputmode="numeric" min="1" max="999" placeholder="例：4">
+        </div>
+      </div>
+      <button class="btn btn-primary" type="submit" style="margin-top:14px">＋ 追加する</button>
+    </form>
+  </div>
+
+  <div class="ad-slot"><!-- AdMob等の広告をここに表示 -->広告スペース</div>
+
+  <div class="card">
+    <h2>作り置き一覧（<span id="count">0</span>件）</h2>
+    <ul class="list" id="list"></ul>
+    <p class="empty" id="empty">
+      <span class="big">🥡</span>
+      まだ作り置きがありません。<br>
+      作った料理を登録すると、食べ切り目安の「あと◯日」がひと目でわかります。
+    </p>
+  </div>
+</main>
+
+<footer>
+  <p>データはこの端末内にのみ保存されます。外部送信はありません。</p>
+  <p><a href="../../privacy-tsukuoki-memo.html">プライバシーポリシー</a>　|　<a href="../index.html">アプリ一覧</a></p>
+  <p>© 作り置きメモ</p>
+</footer>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3>設定</h3>
+    <button class="btn btn-ghost" id="export">データを書き出す（バックアップ）</button>
+    <button class="btn btn-ghost" id="closeModal">閉じる</button>
+    <button class="btn" id="clear" style="background:var(--danger);color:#fff">すべてのデータを削除</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="tsukuoki-memo";
+  // ---- storage helper (shared pattern across all apps) ----
+  var store={
+    get:function(k,d){ try{var v=localStorage.getItem(KEY+":"+k);return v==null?d:JSON.parse(v);}catch(e){return d;} },
+    set:function(k,v){ try{localStorage.setItem(KEY+":"+k,JSON.stringify(v));}catch(e){} },
+    del:function(){ try{Object.keys(localStorage).forEach(function(x){if(x.indexOf(KEY+":")===0)localStorage.removeItem(x);});}catch(e){} }
+  };
+  function $(s){return document.querySelector(s);}
+  function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show");},1800);}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+  // ---- date helpers ----
+  function pad(n){return (n<10?"0":"")+n;}
+  function todayStr(){var d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+  function todayMid(){var d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+  function parseDate(s){var p=String(s).split("-");return new Date(+p[0],(+p[1])-1,+p[2]);}
+  function fmtMD(s){var d=parseDate(s);return (d.getMonth()+1)+"/"+d.getDate();}
+  function eatByDate(it){var d=parseDate(it.made);return new Date(d.getFullYear(),d.getMonth(),d.getDate()+(parseInt(it.days,10)||0));}
+  function daysLeft(it){return Math.round((eatByDate(it)-todayMid())/86400000);}
+
+  var items=store.get("items",[]);   // {id,name,made,days,qty}
+
+  function save(){ store.set("items",items); }
+
+  function badgeFor(dl){
+    if(dl<0)  return {cls:"over",  txt:"期限切れ"};
+    if(dl===0)return {cls:"danger",txt:"今日まで"};
+    if(dl<=1) return {cls:"danger",txt:"あと"+dl+"日"};
+    if(dl<=3) return {cls:"warn",  txt:"あと"+dl+"日"};
+    return {cls:"ok",txt:"あと"+dl+"日"};
+  }
+
+  function render(){
+    var list=$("#list"), empty=$("#empty");
+    $("#count").textContent=items.length;
+    empty.style.display=items.length?"none":"block";
+    // sort by eat-by (soonest first)
+    var sorted=items.slice().sort(function(a,b){return eatByDate(a)-eatByDate(b);});
+    list.innerHTML=sorted.map(function(it){
+      var dl=daysLeft(it), b=badgeFor(dl);
+      var eb=eatByDate(it);
+      var meta='作った日 '+esc(fmtMD(it.made))+'　目安 '+(eb.getMonth()+1)+'/'+eb.getDate()+'（日持ち'+esc(String(it.days))+'日）';
+      var hasQty=(it.qty!=null && it.qty!=="" && !isNaN(parseInt(it.qty,10)));
+      var qtyHtml=hasQty?'<span class="qty">残り '+esc(String(it.qty))+'</span>':'';
+      var eatBtn=hasQty?'<button class="eat" data-id="'+esc(String(it.id))+'" data-act="eat">🍽 1つ食べた</button>':'';
+      return '<li class="item" data-id="'+esc(String(it.id))+'">'+
+          '<div class="body">'+
+            '<div class="name">'+esc(it.name)+'</div>'+
+            '<div class="meta">'+meta+(hasQty?'　'+qtyHtml:'')+'</div>'+
+          '</div>'+
+          '<div class="acts">'+
+            '<span class="badge '+b.cls+'">'+b.txt+'</span>'+
+            eatBtn+
+            '<button class="del" data-id="'+esc(String(it.id))+'" data-act="del" aria-label="削除">🗑</button>'+
+          '</div>'+
+        '</li>';
+    }).join("");
+  }
+
+  // default date = today
+  function resetForm(){
+    $("#name").value=""; $("#made").value=todayStr(); $("#days").value=""; $("#qty").value="";
+  }
+
+  // add
+  $("#addForm").addEventListener("submit",function(e){
+    e.preventDefault();
+    var n=$("#name").value.trim(); if(!n)return;
+    var made=$("#made").value||todayStr();
+    var days=parseInt($("#days").value,10);
+    if(isNaN(days)||days<1){ toast("日持ち日数を入力してください"); return; }
+    var qv=$("#qty").value.trim();
+    var qty=(qv==="")?null:Math.max(1,parseInt(qv,10)||1);
+    items.push({id:Date.now()+"-"+Math.floor(performance.now()),name:n,made:made,days:days,qty:qty});
+    save(); resetForm(); render(); toast("追加しました");
+  });
+
+  // list actions (event delegation)
+  $("#list").addEventListener("click",function(e){
+    var t=e.target.closest("[data-act]"); if(!t)return;
+    var id=t.getAttribute("data-id"), act=t.getAttribute("data-act");
+    var idx=-1; items.forEach(function(i,k){if(String(i.id)===String(id))idx=k;});
+    if(idx<0)return;
+    if(act==="del"){
+      items.splice(idx,1); save(); render();
+    }else if(act==="eat"){
+      var it=items[idx];
+      var q=parseInt(it.qty,10)||0; q-=1;
+      if(q<=0){
+        items.splice(idx,1); save(); render(); toast("完食！お疲れさまでした🎉");
+      }else{
+        it.qty=q; save(); render(); toast("残り "+q+" になりました");
+      }
+    }
+  });
+
+  // settings modal
+  $("#gear").addEventListener("click",function(){$("#modal").classList.add("open");});
+  $("#closeModal").addEventListener("click",function(){$("#modal").classList.remove("open");});
+  $("#modal").addEventListener("click",function(e){if(e.target===this)this.classList.remove("open");});
+  $("#export").addEventListener("click",function(){
+    var data=JSON.stringify({items:items},null,2);
+    try{
+      var b=new Blob([data],{type:"application/json"});
+      var a=document.createElement("a");a.href=URL.createObjectURL(b);
+      a.download="tsukuoki-memo-backup.json";a.click();
+    }catch(e){ prompt("以下をコピーして保存してください",data); }
+  });
+  $("#clear").addEventListener("click",function(){
+    if(confirm("すべての作り置きデータを削除します。よろしいですか？")){
+      store.del(); items=[]; render(); $("#modal").classList.remove("open");
+      resetForm(); toast("削除しました");
+    }
+  });
+
+  resetForm();
+  render();
+})();
+</script>
+</body>
+</html>
