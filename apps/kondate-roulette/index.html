@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ff7a59">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="今日の晩ごはんを決めてくれる献立ルーレット。よく作るメニューを登録してタップするだけ。">
+<title>こんだて決め｜今日の晩ごはんルーレット</title>
+<style>
+  :root{
+    --accent:#ff7a59; --accent-d:#e85f3d; --accent-soft:#fff1ec;
+    --bg:#faf7f5; --card:#ffffff; --text:#2b2622; --sub:#8a827b;
+    --line:#eee6e0; --ok:#3fa66a; --warn:#e0952b; --danger:#d9534f;
+    --radius:16px; --shadow:0 2px 12px rgba(80,60,50,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#18140f; --card:#241e18; --text:#f2ece6; --sub:#a89f96;
+      --line:#372f27; --accent-soft:#3a251d; --shadow:0 2px 12px rgba(0,0,0,.4);}
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    padding-bottom:env(safe-area-inset-bottom);-webkit-text-size-adjust:100%}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--accent),var(--accent-d));
+    color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  header .ico{font-size:24px;line-height:1}
+  header h1{font-size:18px;margin:0;font-weight:700;flex:1}
+  header button.gear{background:rgba(255,255,255,.2);border:0;color:#fff;font-size:18px;
+    width:36px;height:36px;border-radius:50%;cursor:pointer}
+  main{max-width:640px;margin:0 auto;padding:16px 16px 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  h2{font-size:15px;margin:0 0 12px;color:var(--sub);font-weight:700;letter-spacing:.02em}
+  .btn{appearance:none;border:0;border-radius:12px;padding:13px 18px;font-size:16px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:transform .05s,filter .15s;width:100%}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:var(--accent-soft);color:var(--accent-d)}
+  .btn-sm{width:auto;padding:8px 14px;font-size:14px;border-radius:10px}
+  input,select,textarea{font-family:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--card);color:var(--text);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+  .row{display:flex;gap:8px;align-items:center}
+  .roulette{text-align:center;padding:22px 12px;background:var(--accent-soft);border-radius:var(--radius);margin-bottom:14px}
+  .roulette .result{font-size:30px;font-weight:800;color:var(--accent-d);min-height:44px;margin:6px 0 14px;word-break:break-word}
+  .roulette .result.spin{opacity:.85}
+  .roulette small{color:var(--sub)}
+  ul.list{list-style:none;margin:0;padding:0}
+  ul.list li{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--line)}
+  ul.list li:last-child{border-bottom:0}
+  ul.list li .name{flex:1;word-break:break-word}
+  ul.list li .tag{font-size:12px;color:var(--sub);background:var(--bg);padding:2px 8px;border-radius:20px}
+  .del{background:none;border:0;color:var(--danger);font-size:18px;cursor:pointer;padding:4px 8px}
+  .empty{text-align:center;color:var(--sub);padding:20px 8px;font-size:14px}
+  .hist{font-size:14px;color:var(--sub)}
+  .hist b{color:var(--text);font-weight:600}
+  .ad-slot{margin:16px auto;max-width:640px;min-height:56px;border:1px dashed var(--line);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;background:var(--card)}
+  footer{max-width:640px;margin:0 auto;padding:18px 16px 34px;color:var(--sub);font-size:12px;text-align:center}
+  footer a{color:var(--sub)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+  .modal.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))}
+  .sheet h3{margin:0 0 12px;font-size:17px}
+  .sheet .btn{margin-top:8px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#2b2622;color:#fff;
+    padding:10px 18px;border-radius:22px;font-size:14px;opacity:0;transition:.25s;z-index:99;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <span class="ico">🍚</span>
+  <h1>こんだて決め</h1>
+  <button class="gear" id="gear" aria-label="設定">⚙️</button>
+</header>
+
+<main>
+  <div class="roulette">
+    <small>今日の晩ごはんは…</small>
+    <div class="result" id="result">？</div>
+    <button class="btn btn-primary" id="spin">🎲 献立を決める！</button>
+  </div>
+
+  <div class="ad-slot"><!-- AdMob等の広告をここに表示 -->広告スペース</div>
+
+  <div class="card">
+    <h2>メニューを追加</h2>
+    <form id="addForm" class="row" autocomplete="off">
+      <input id="name" placeholder="例：カレーライス" maxlength="30" required>
+      <select id="cat" style="max-width:110px">
+        <option value="">種類</option>
+        <option>肉</option><option>魚</option><option>麺</option>
+        <option>丼</option><option>鍋</option><option>野菜</option><option>その他</option>
+      </select>
+      <button class="btn btn-primary btn-sm" type="submit">追加</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>メニュー一覧（<span id="count">0</span>件）</h2>
+    <ul class="list" id="list"></ul>
+    <p class="empty" id="empty">まだメニューがありません。よく作る料理を登録しましょう。</p>
+  </div>
+
+  <div class="card">
+    <h2>最近決めた献立</h2>
+    <div id="hist" class="hist"><p class="empty" style="padding:6px">まだ履歴がありません。</p></div>
+  </div>
+</main>
+
+<footer>
+  <p>データはこの端末内にのみ保存されます。外部送信はありません。</p>
+  <p><a href="../../privacy-kondate-roulette.html">プライバシーポリシー</a>　|　<a href="../index.html">アプリ一覧</a></p>
+  <p>© こんだて決め</p>
+</footer>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3>設定</h3>
+    <button class="btn btn-ghost" id="export">データを書き出す（バックアップ）</button>
+    <button class="btn btn-ghost" id="closeModal">閉じる</button>
+    <button class="btn" id="clear" style="background:var(--danger);color:#fff">すべてのデータを削除</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="kondate-roulette";
+  // ---- storage helper (shared pattern across all apps) ----
+  var store={
+    get:function(k,d){ try{var v=localStorage.getItem(KEY+":"+k);return v==null?d:JSON.parse(v);}catch(e){return d;} },
+    set:function(k,v){ try{localStorage.setItem(KEY+":"+k,JSON.stringify(v));}catch(e){} },
+    del:function(){ try{Object.keys(localStorage).forEach(function(x){if(x.indexOf(KEY+":")===0)localStorage.removeItem(x);});}catch(e){} }
+  };
+  function $(s){return document.querySelector(s);}
+  function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show");},1800);}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+  var items=store.get("items",[]);      // {id,name,cat}
+  var history=store.get("history",[]);  // {name,at}
+
+  function save(){ store.set("items",items); store.set("history",history); }
+
+  function render(){
+    var list=$("#list"), empty=$("#empty");
+    $("#count").textContent=items.length;
+    empty.style.display=items.length?"none":"block";
+    list.innerHTML=items.map(function(it){
+      return '<li data-id="'+it.id+'"><span class="name">'+esc(it.name)+'</span>'+
+        (it.cat?'<span class="tag">'+esc(it.cat)+'</span>':'')+
+        '<button class="del" aria-label="削除">🗑</button></li>';
+    }).join("");
+    var h=$("#hist");
+    if(!history.length){ h.innerHTML='<p class="empty" style="padding:6px">まだ履歴がありません。</p>'; }
+    else{ h.innerHTML=history.slice(0,10).map(function(x){
+        return '<div style="padding:6px 0;border-bottom:1px solid var(--line)"><b>'+esc(x.name)+'</b>　<span>'+x.at+'</span></div>';
+      }).join(""); }
+  }
+
+  // add
+  $("#addForm").addEventListener("submit",function(e){
+    e.preventDefault();
+    var n=$("#name").value.trim(); if(!n)return;
+    items.push({id:Date.now()+"-"+Math.floor(performance.now()),name:n,cat:$("#cat").value});
+    save(); $("#name").value=""; $("#cat").value=""; render(); toast("追加しました");
+  });
+  // delete (event delegation)
+  $("#list").addEventListener("click",function(e){
+    if(!e.target.classList.contains("del"))return;
+    var id=e.target.closest("li").getAttribute("data-id");
+    items=items.filter(function(i){return String(i.id)!==String(id);});
+    save(); render();
+  });
+
+  // roulette
+  var spinning=false;
+  $("#spin").addEventListener("click",function(){
+    if(spinning)return;
+    if(!items.length){ toast("先にメニューを追加してください"); return; }
+    if(items.length===1){ decide(items[0].name); return; }
+    spinning=true;
+    var res=$("#result"); res.classList.add("spin");
+    // avoid immediately repeating the last decided meal
+    var last=history[0]&&history[0].name;
+    var pool=items.filter(function(i){return i.name!==last;}); if(!pool.length)pool=items;
+    var ticks=16+Math.floor(Math.random()*8), i=0;
+    var timer=setInterval(function(){
+      res.textContent=items[Math.floor(Math.random()*items.length)].name;
+      if(++i>=ticks){
+        clearInterval(timer);
+        var pick=pool[Math.floor(Math.random()*pool.length)];
+        res.classList.remove("spin");
+        spinning=false;
+        decide(pick.name);
+      }
+    },70);
+  });
+  function decide(name){
+    $("#result").textContent=name;
+    var d=new Date();
+    var at=(d.getMonth()+1)+"/"+d.getDate();
+    history.unshift({name:name,at:at});
+    history=history.slice(0,30);
+    save(); render(); toast("今日は「"+name+"」に決定！");
+  }
+
+  // settings modal
+  $("#gear").addEventListener("click",function(){$("#modal").classList.add("open");});
+  $("#closeModal").addEventListener("click",function(){$("#modal").classList.remove("open");});
+  $("#modal").addEventListener("click",function(e){if(e.target===this)this.classList.remove("open");});
+  $("#export").addEventListener("click",function(){
+    var data=JSON.stringify({items:items,history:history},null,2);
+    try{
+      var b=new Blob([data],{type:"application/json"});
+      var a=document.createElement("a");a.href=URL.createObjectURL(b);
+      a.download="kondate-backup.json";a.click();
+    }catch(e){ prompt("以下をコピーして保存してください",data); }
+  });
+  $("#clear").addEventListener("click",function(){
+    if(confirm("すべてのメニューと履歴を削除します。よろしいですか？")){
+      store.del(); items=[]; history=[]; render(); $("#modal").classList.remove("open");
+      $("#result").textContent="？"; toast("削除しました");
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

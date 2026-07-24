@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3b82c4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="カテゴリ別に整理できる買い物リスト。買ったものにチェックしてまとめて消せます。">
+<title>お買い物メモ｜カテゴリ別の買い物リスト</title>
+<style>
+  :root{
+    --accent:#3b82c4; --accent-d:#2f6ba3; --accent-soft:#eef4fb;
+    --bg:#faf7f5; --card:#ffffff; --text:#2b2622; --sub:#8a827b;
+    --line:#eee6e0; --ok:#3fa66a; --warn:#e0952b; --danger:#d9534f;
+    --radius:16px; --shadow:0 2px 12px rgba(80,60,50,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#141821; --card:#1e242e; --text:#f2ece6; --sub:#a09aa6;
+      --line:#2d3540; --accent-soft:#1c2a3a; --shadow:0 2px 12px rgba(0,0,0,.4);}
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    padding-bottom:env(safe-area-inset-bottom);-webkit-text-size-adjust:100%}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--accent),var(--accent-d));
+    color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  header .ico{font-size:24px;line-height:1}
+  header h1{font-size:18px;margin:0;font-weight:700;flex:1}
+  header button.gear{background:rgba(255,255,255,.2);border:0;color:#fff;font-size:18px;
+    width:36px;height:36px;border-radius:50%;cursor:pointer}
+  main{max-width:640px;margin:0 auto;padding:16px 16px 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  h2{font-size:15px;margin:0 0 12px;color:var(--sub);font-weight:700;letter-spacing:.02em}
+  .btn{appearance:none;border:0;border-radius:12px;padding:13px 18px;font-size:16px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:transform .05s,filter .15s;width:100%}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:var(--accent-soft);color:var(--accent-d)}
+  .btn-sm{width:auto;padding:9px 14px;font-size:14px;border-radius:10px}
+  input,select,textarea{font-family:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--card);color:var(--text);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+  input[type=checkbox]{width:24px;height:24px;flex:none;accent-color:var(--accent);cursor:pointer;padding:0}
+  .row{display:flex;gap:8px;align-items:center}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:var(--accent-soft);color:var(--accent-d);border:1px solid var(--line);border-radius:20px;
+    padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;line-height:1}
+  .chip:active{transform:scale(.96)}
+  .summary{display:flex;gap:14px;align-items:baseline;margin-bottom:10px;font-size:14px;color:var(--sub)}
+  .summary b{font-size:20px;color:var(--accent-d);font-weight:800}
+  .cat-head{font-size:13px;color:var(--accent-d);font-weight:700;margin:16px 0 2px;padding:0 2px;
+    display:flex;align-items:center;gap:6px}
+  .cat-head:first-child{margin-top:2px}
+  ul.list{list-style:none;margin:0;padding:0}
+  ul.list li{display:flex;align-items:center;gap:11px;padding:11px 4px;border-bottom:1px solid var(--line)}
+  ul.list li:last-child{border-bottom:0}
+  ul.list li .name{flex:1;word-break:break-word}
+  ul.list li .name.done{text-decoration:line-through;color:var(--sub)}
+  ul.list li .qty{font-size:12px;color:var(--sub);background:var(--bg);padding:2px 8px;border-radius:20px;white-space:nowrap}
+  .del{background:none;border:0;color:var(--danger);font-size:18px;cursor:pointer;padding:4px 8px}
+  .empty{text-align:center;color:var(--sub);padding:22px 8px;font-size:14px}
+  .actions{display:flex;gap:8px;margin-top:14px}
+  .actions .btn{flex:1}
+  .ad-slot{margin:16px auto;max-width:640px;min-height:56px;border:1px dashed var(--line);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;background:var(--card)}
+  footer{max-width:640px;margin:0 auto;padding:18px 16px 34px;color:var(--sub);font-size:12px;text-align:center}
+  footer a{color:var(--sub)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+  .modal.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))}
+  .sheet h3{margin:0 0 12px;font-size:17px}
+  .sheet .btn{margin-top:8px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#2b2622;color:#fff;
+    padding:10px 18px;border-radius:22px;font-size:14px;opacity:0;transition:.25s;z-index:99;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <span class="ico">🛒</span>
+  <h1>お買い物メモ</h1>
+  <button class="gear" id="gear" aria-label="設定">⚙️</button>
+</header>
+
+<main>
+  <div class="card">
+    <h2>品物を追加</h2>
+    <form id="addForm" autocomplete="off">
+      <input id="name" placeholder="例：トマト" maxlength="30" required>
+      <div class="row" style="margin-top:8px">
+        <select id="cat">
+          <option value="野菜">野菜</option>
+          <option value="肉・魚">肉・魚</option>
+          <option value="乳製品・卵">乳製品・卵</option>
+          <option value="パン・主食">パン・主食</option>
+          <option value="調味料">調味料</option>
+          <option value="日用品">日用品</option>
+          <option value="その他">その他</option>
+        </select>
+        <input id="qty" placeholder="個数メモ（任意）" maxlength="20" style="max-width:150px">
+      </div>
+      <button class="btn btn-primary" type="submit" style="margin-top:8px">リストに追加</button>
+    </form>
+  </div>
+
+  <div class="ad-slot"><!-- AdMob等の広告をここに表示 -->広告スペース</div>
+
+  <div class="card">
+    <h2>よく買う定番品</h2>
+    <div class="chips" id="quick"></div>
+  </div>
+
+  <div class="card">
+    <h2>買い物リスト</h2>
+    <div class="summary">
+      <span>残り <b id="remain">0</b> 件</span>
+      <span>買った <b id="doneCount">0</b> 件</span>
+    </div>
+    <div id="list"></div>
+    <p class="empty" id="empty">リストは空です。上のフォームか定番品チップから追加しましょう。</p>
+    <div class="actions" id="actions" style="display:none">
+      <button class="btn btn-ghost" id="clearDone">買ったものを消す</button>
+      <button class="btn btn-ghost" id="clearAll" style="background:var(--bg)">すべて消す</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p>データはこの端末内にのみ保存されます。外部送信はありません。</p>
+  <p><a href="../../privacy-kaimono-memo.html">プライバシーポリシー</a>　|　<a href="../index.html">アプリ一覧</a></p>
+  <p>© お買い物メモ</p>
+</footer>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3>設定</h3>
+    <button class="btn btn-ghost" id="export">データを書き出す（バックアップ）</button>
+    <button class="btn btn-ghost" id="closeModal">閉じる</button>
+    <button class="btn" id="clear" style="background:var(--danger);color:#fff">すべてのデータを削除</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="kaimono-memo";
+  // ---- storage helper (shared pattern across all apps) ----
+  var store={
+    get:function(k,d){ try{var v=localStorage.getItem(KEY+":"+k);return v==null?d:JSON.parse(v);}catch(e){return d;} },
+    set:function(k,v){ try{localStorage.setItem(KEY+":"+k,JSON.stringify(v));}catch(e){} },
+    del:function(){ try{Object.keys(localStorage).forEach(function(x){if(x.indexOf(KEY+":")===0)localStorage.removeItem(x);});}catch(e){} }
+  };
+  function $(s){return document.querySelector(s);}
+  function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show");},1800);}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+  // category order + emoji for group headings
+  var CATS=["野菜","肉・魚","乳製品・卵","パン・主食","調味料","日用品","その他"];
+  var CAT_ICON={"野菜":"🥬","肉・魚":"🥩","乳製品・卵":"🥚","パン・主食":"🍞","調味料":"🧂","日用品":"🧼","その他":"🛍️"};
+  // quick-add staples {name, cat}
+  var QUICK=[
+    {n:"牛乳",c:"乳製品・卵"},{n:"卵",c:"乳製品・卵"},{n:"パン",c:"パン・主食"},{n:"米",c:"パン・主食"},
+    {n:"玉ねぎ",c:"野菜"},{n:"にんじん",c:"野菜"},{n:"じゃがいも",c:"野菜"},{n:"鶏肉",c:"肉・魚"},
+    {n:"豚肉",c:"肉・魚"},{n:"納豆",c:"乳製品・卵"},{n:"豆腐",c:"その他"},{n:"醤油",c:"調味料"},
+    {n:"トイレットペーパー",c:"日用品"},{n:"ティッシュ",c:"日用品"}
+  ];
+
+  var items=store.get("items",[]); // {id,name,cat,qty,done}
+
+  function save(){ store.set("items",items); }
+
+  function render(){
+    var listEl=$("#list"), empty=$("#empty"), actions=$("#actions");
+    var remain=items.filter(function(i){return !i.done;}).length;
+    var done=items.length-remain;
+    $("#remain").textContent=remain;
+    $("#doneCount").textContent=done;
+    empty.style.display=items.length?"none":"block";
+    actions.style.display=items.length?"flex":"none";
+
+    var html="";
+    CATS.forEach(function(cat){
+      var group=items.filter(function(i){return i.cat===cat;});
+      if(!group.length)return;
+      html+='<div class="cat-head"><span>'+CAT_ICON[cat]+'</span>'+esc(cat)+'（'+group.length+'）</div>';
+      html+='<ul class="list">'+group.map(function(it){
+        return '<li data-id="'+esc(it.id)+'">'+
+          '<input type="checkbox" class="chk"'+(it.done?' checked':'')+' aria-label="買った">'+
+          '<span class="name'+(it.done?' done':'')+'">'+esc(it.name)+'</span>'+
+          (it.qty?'<span class="qty">'+esc(it.qty)+'</span>':'')+
+          '<button class="del" aria-label="削除">🗑</button></li>';
+      }).join("")+'</ul>';
+    });
+    listEl.innerHTML=html;
+  }
+
+  function addItem(name,cat,qty){
+    name=String(name).trim(); if(!name)return;
+    items.push({id:Date.now()+"-"+Math.floor(performance.now()),name:name,cat:cat||"その他",qty:(qty||"").trim(),done:false});
+    save(); render();
+  }
+
+  // render quick chips
+  (function(){
+    $("#quick").innerHTML=QUICK.map(function(q,i){
+      return '<button type="button" class="chip" data-i="'+i+'">'+esc(q.n)+'</button>';
+    }).join("");
+  })();
+  $("#quick").addEventListener("click",function(e){
+    var b=e.target.closest(".chip"); if(!b)return;
+    var q=QUICK[+b.getAttribute("data-i")];
+    addItem(q.n,q.c,""); toast("「"+q.n+"」を追加しました");
+  });
+
+  // add form
+  $("#addForm").addEventListener("submit",function(e){
+    e.preventDefault();
+    var n=$("#name").value.trim(); if(!n)return;
+    addItem(n,$("#cat").value,$("#qty").value);
+    $("#name").value=""; $("#qty").value=""; $("#name").focus();
+    toast("追加しました");
+  });
+
+  // list interactions (checkbox toggle + delete) via delegation
+  $("#list").addEventListener("click",function(e){
+    var li=e.target.closest("li"); if(!li)return;
+    var id=li.getAttribute("data-id");
+    if(e.target.classList.contains("del")){
+      items=items.filter(function(i){return String(i.id)!==String(id);});
+      save(); render(); return;
+    }
+    if(e.target.classList.contains("chk")){
+      var it=items.filter(function(i){return String(i.id)===String(id);})[0];
+      if(it){ it.done=e.target.checked; save(); render(); }
+    }
+  });
+
+  // clear checked / clear all
+  $("#clearDone").addEventListener("click",function(){
+    var n=items.filter(function(i){return i.done;}).length;
+    if(!n){ toast("チェック済みの品はありません"); return; }
+    items=items.filter(function(i){return !i.done;});
+    save(); render(); toast(n+"件を消しました");
+  });
+  $("#clearAll").addEventListener("click",function(){
+    if(!items.length)return;
+    if(confirm("リストの品物をすべて消します。よろしいですか？")){
+      items=[]; save(); render(); toast("すべて消しました");
+    }
+  });
+
+  // settings modal
+  $("#gear").addEventListener("click",function(){$("#modal").classList.add("open");});
+  $("#closeModal").addEventListener("click",function(){$("#modal").classList.remove("open");});
+  $("#modal").addEventListener("click",function(e){if(e.target===this)this.classList.remove("open");});
+  $("#export").addEventListener("click",function(){
+    var data=JSON.stringify({items:items},null,2);
+    try{
+      var b=new Blob([data],{type:"application/json"});
+      var a=document.createElement("a");a.href=URL.createObjectURL(b);
+      a.download="kaimono-memo-backup.json";a.click();
+    }catch(e){ prompt("以下をコピーして保存してください",data); }
+  });
+  $("#clear").addEventListener("click",function(){
+    if(confirm("すべての買い物リストのデータを削除します。よろしいですか？")){
+      store.del(); items=[]; render(); $("#modal").classList.remove("open"); toast("削除しました");
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

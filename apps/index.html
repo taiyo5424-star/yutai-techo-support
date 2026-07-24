@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ff7a59">
+<meta name="description" content="主婦・家庭の毎日の困りごとを解決する無料アプリ集。すべて登録不要・端末内保存で、そのまますぐ使えます。">
+<title>くらしの困りごと解決アプリ集</title>
+<style>
+  :root{--bg:#faf7f5;--card:#fff;--text:#2b2622;--sub:#8a827b;--line:#eee6e0;--accent:#ff7a59;--radius:16px;--shadow:0 2px 12px rgba(80,60,50,.08)}
+  @media (prefers-color-scheme:dark){:root{--bg:#18140f;--card:#241e18;--text:#f2ece6;--sub:#a89f96;--line:#372f27;--shadow:0 2px 12px rgba(0,0,0,.4)}}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+  header{background:linear-gradient(135deg,#ff7a59,#e05572);color:#fff;padding:34px 20px 30px;padding-top:calc(34px + env(safe-area-inset-top));text-align:center}
+  header h1{margin:0 0 6px;font-size:23px}
+  header p{margin:0;opacity:.95;font-size:14px}
+  main{max-width:720px;margin:0 auto;padding:18px 16px 34px}
+  .note{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:18px;font-size:13px;color:var(--sub);box-shadow:var(--shadow)}
+  .note b{color:var(--text)}
+  .grid{display:grid;grid-template-columns:1fr;gap:12px}
+  @media(min-width:560px){.grid{grid-template-columns:1fr 1fr}}
+  .card{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:var(--radius);padding:14px 14px;text-decoration:none;color:inherit;box-shadow:var(--shadow);transition:transform .06s}
+  .card:active{transform:scale(.99)}
+  .card .emoji{font-size:30px;line-height:1;width:40px;text-align:center;flex:none}
+  .card .body{display:flex;flex-direction:column;flex:1;min-width:0}
+  .card .name{font-weight:700;font-size:16px}
+  .card .tag{font-size:12px;color:var(--c);font-weight:600}
+  .card .d{font-size:12px;color:var(--sub);margin-top:2px}
+  .card .go{color:var(--sub);font-size:22px;flex:none}
+  footer{max-width:720px;margin:0 auto;padding:10px 16px 40px;text-align:center;color:var(--sub);font-size:12px}
+  footer a{color:var(--sub)}
+</style>
+</head>
+<body>
+<header>
+  <h1>くらしの困りごと解決アプリ集</h1>
+  <p>主婦・家庭の「あるある」を、ちょっとラクにする無料アプリ 20種</p>
+</header>
+<main>
+  <div class="note">
+    <b>すべて登録不要・完全無料。</b>入力したデータはお使いの端末内にだけ保存され、外部に送信されません。オフラインでも動きます。気になるアプリをタップしてすぐお試しください。
+  </div>
+  <div class="grid">
+      <a class="card" href="./kondate-roulette/index.html" style="--c:#ff7a59">
+        <span class="emoji">🍚</span>
+        <span class="body"><span class="name">こんだて決め</span><span class="tag">今日の晩ごはんルーレット</span><span class="d">登録したメニューから今日の献立をかんたんに決められる</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./kigen-memo/index.html" style="--c:#3fa66a">
+        <span class="emoji">🥬</span>
+        <span class="body"><span class="name">賞味期限メモ</span><span class="tag">食材の期限を見える化</span><span class="d">食材の賞味期限をまとめて管理し、食品ロスを防ぐ</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./kaimono-memo/index.html" style="--c:#3b82c4">
+        <span class="emoji">🛒</span>
+        <span class="body"><span class="name">お買い物メモ</span><span class="tag">カテゴリ別の買い物リスト</span><span class="d">カテゴリ別に整理できる買い物リストを作れる</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./sokone-memo/index.html" style="--c:#17a2a2">
+        <span class="emoji">🏷️</span>
+        <span class="body"><span class="name">底値メモ</span><span class="tag">最安値を記録して買い時判定</span><span class="d">よく買う商品の底値(最安値)を記録できる</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./fukuro-kakei/index.html" style="--c:#8b5cf6">
+        <span class="emoji">👛</span>
+        <span class="body"><span class="name">袋分け家計簿</span><span class="tag">費目ごとに予算を管理</span><span class="d">費目ごとに予算を決めて支出を管理できる袋分け家計簿</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./gomi-calendar/index.html" style="--c:#2fa39a">
+        <span class="emoji">🗑️</span>
+        <span class="body"><span class="name">ゴミ出しカレンダー</span><span class="tag">今日・明日のゴミがわかる</span><span class="d">地域のゴミ収集日を登録し、今日・明日のゴミがわかる</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./kaji-share/index.html" style="--c:#ef8f3c">
+        <span class="emoji">🧹</span>
+        <span class="body"><span class="name">家事シェア</span><span class="tag">家事の分担を見える化</span><span class="d">家事を家族で分担し、実施状況を見える化できる</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./osouji-rotation/index.html" style="--c:#38a3d1">
+        <span class="emoji">✨</span>
+        <span class="body"><span class="name">お掃除ローテ</span><span class="tag">今日やる掃除がわかる</span><span class="d">場所ごとの掃除の頻度を管理し、今日やる場所がわかる</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./tsukuoki-memo/index.html" style="--c:#c08a2d">
+        <span class="emoji">🥡</span>
+        <span class="body"><span class="name">作り置きメモ</span><span class="tag">常備菜の食べ切り管理</span><span class="d">作り置き・常備菜の作った日と食べ切り目安を管理できる</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./kondate-week/index.html" style="--c:#e86aa0">
+        <span class="emoji">📅</span>
+        <span class="body"><span class="name">週間献立プランナー</span><span class="tag">1週間の献立をまとめて計画</span><span class="d">1週間の献立をまとめて計画できる</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./nichiyo-stock/index.html" style="--c:#5566c9">
+        <span class="emoji">🧴</span>
+        <span class="body"><span class="name">日用品ストック</span><span class="tag">日用品の残量と買い足し</span><span class="d">日用品の残量を管理し、買い足しの目安がわかる</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./point-kigen/index.html" style="--c:#e05572">
+        <span class="emoji">🎫</span>
+        <span class="body"><span class="name">ポイント期限メモ</span><span class="tag">ポイント・クーポンの失効防止</span><span class="d">ポイントやクーポンの有効期限を管理できる</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./itadaki-cho/index.html" style="--c:#b8559e">
+        <span class="emoji">🎁</span>
+        <span class="body"><span class="name">いただきもの帳</span><span class="tag">贈答とお返しの管理</span><span class="d">いただきもの・贈りものとお返しを管理できる</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./rolling-stock/index.html" style="--c:#7a9a3c">
+        <span class="emoji">🥫</span>
+        <span class="body"><span class="name">ローリングストック</span><span class="tag">防災備蓄を回しながら管理</span><span class="d">防災用の備蓄食品を賞味期限を回しながら管理できる</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./gakko-memo/index.html" style="--c:#3f7fd0">
+        <span class="emoji">🎒</span>
+        <span class="body"><span class="name">学校の提出物メモ</span><span class="tag">提出物・集金・行事の締切管理</span><span class="d">子どもの提出物・集金・行事の締切を管理できる</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./kodomo-size/index.html" style="--c:#34a877">
+        <span class="emoji">👕</span>
+        <span class="body"><span class="name">こども服サイズ帳</span><span class="tag">服のサイズ・お下がり管理</span><span class="d">こども服のサイズやお下がりの在庫を管理できる</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./cooking-timer/index.html" style="--c:#e0553f">
+        <span class="emoji">⏲️</span>
+        <span class="body"><span class="name">料理マルチタイマー</span><span class="tag">複数の料理を同時に計測</span><span class="d">複数の料理を同時に計れるマルチタイマー</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./recipe-note/index.html" style="--c:#e8683c">
+        <span class="emoji">📖</span>
+        <span class="body"><span class="name">レシピお気に入り帳</span><span class="tag">お気に入りレシピをスクラップ</span><span class="d">お気に入りのレシピをまとめてスクラップできる</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./sentaku-guide/index.html" style="--c:#3aa0e0">
+        <span class="emoji">🧺</span>
+        <span class="body"><span class="name">洗濯表示ガイド</span><span class="tag">洗濯マークの意味がわかる</span><span class="d">洗濯表示マークの意味をすぐに調べられる</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+      <a class="card" href="./sakidori-chokin/index.html" style="--c:#e85f7a">
+        <span class="emoji">🐷</span>
+        <span class="body"><span class="name">先取り貯金</span><span class="tag">目標を決めてコツコツ貯金</span><span class="d">目標を決めてコツコツ先取り貯金を続けられる</span></span>
+        <span class="go" aria-hidden="true">›</span>
+      </a>
+  </div>
+</main>
+<footer>
+  <p><a href="../index.html">← サポート・プライバシーポリシー一覧へ</a></p>
+  <p>© くらしの困りごと解決アプリ集</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7a9a3c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="防災用の備蓄食品・水を、賞味期限を回しながら管理。買い足しの目安もわかります。">
+<title>ローリングストック｜防災備蓄をかしこく管理</title>
+<style>
+  :root{
+    --accent:#7a9a3c; --accent-d:#63802f; --accent-soft:#f2f6e8;
+    --bg:#faf7f5; --card:#ffffff; --text:#2b2622; --sub:#8a827b;
+    --line:#eee6e0; --ok:#3fa66a; --warn:#e0952b; --danger:#d9534f;
+    --radius:16px; --shadow:0 2px 12px rgba(80,60,50,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#18140f; --card:#241e18; --text:#f2ece6; --sub:#a89f96;
+      --line:#372f27; --accent-soft:#2c331c; --shadow:0 2px 12px rgba(0,0,0,.4);}
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    padding-bottom:env(safe-area-inset-bottom);-webkit-text-size-adjust:100%}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--accent),var(--accent-d));
+    color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  header .ico{font-size:24px;line-height:1}
+  header h1{font-size:18px;margin:0;font-weight:700;flex:1}
+  header button.gear{background:rgba(255,255,255,.2);border:0;color:#fff;font-size:18px;
+    width:36px;height:36px;border-radius:50%;cursor:pointer}
+  main{max-width:640px;margin:0 auto;padding:16px 16px 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  h2{font-size:15px;margin:0 0 12px;color:var(--sub);font-weight:700;letter-spacing:.02em}
+  h2 .badge{color:var(--warn);font-weight:800}
+  .btn{appearance:none;border:0;border-radius:12px;padding:13px 18px;font-size:16px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:transform .05s,filter .15s;width:100%}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:var(--accent-soft);color:var(--accent-d)}
+  .btn-sm{width:auto;padding:8px 14px;font-size:14px;border-radius:10px}
+  input,select,textarea{font-family:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--card);color:var(--text);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+  label.fld{display:block;margin-bottom:10px}
+  label.fld span{display:block;font-size:13px;color:var(--sub);margin-bottom:4px;font-weight:600}
+  .row2{display:flex;gap:10px}
+  .row2>*{flex:1}
+  /* buy-list card accent */
+  .card.buy{border-color:var(--warn)}
+  .card.buy h2{color:var(--warn)}
+  .short-head{background:var(--accent-soft);border-radius:12px;padding:10px 14px;margin-bottom:10px;
+    font-weight:700;color:var(--accent-d);text-align:center;font-size:14px}
+  .short-head b{color:var(--warn);font-size:17px}
+  /* list */
+  ul.list{list-style:none;margin:0;padding:0}
+  ul.list li{display:flex;align-items:center;gap:11px;padding:12px 4px;border-bottom:1px solid var(--line)}
+  ul.list li:last-child{border-bottom:0}
+  .dot{width:12px;height:12px;border-radius:50%;flex:none;background:var(--line)}
+  .dot.ok{background:var(--ok)}
+  .dot.warn{background:var(--warn)}
+  .dot.danger{background:var(--danger)}
+  li .info{flex:1;min-width:0}
+  li .info .name{font-weight:700;word-break:break-word}
+  li .info .meta{font-size:12px;color:var(--sub)}
+  li .info .meta .due.warn{color:var(--warn);font-weight:700}
+  li .info .meta .due.danger{color:var(--danger);font-weight:700}
+  li .info .meta .lack{color:var(--warn);font-weight:700}
+  li .info .meta .goal-hit{color:var(--ok);font-weight:700}
+  .qty{display:flex;align-items:center;gap:8px;flex:none}
+  .step{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--card);
+    color:var(--accent-d);font-size:20px;font-weight:700;cursor:pointer;line-height:1;padding:0;
+    display:flex;align-items:center;justify-content:center}
+  .step:active{background:var(--accent-soft)}
+  .qnum{min-width:26px;text-align:center;font-weight:800;font-variant-numeric:tabular-nums;font-size:16px}
+  .del{background:none;border:0;color:var(--danger);font-size:18px;cursor:pointer;padding:4px 6px;flex:none}
+  .empty{text-align:center;color:var(--sub);padding:22px 8px;font-size:14px}
+  .ad-slot{margin:16px auto;max-width:640px;min-height:56px;border:1px dashed var(--line);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;background:var(--card)}
+  footer{max-width:640px;margin:0 auto;padding:18px 16px 34px;color:var(--sub);font-size:12px;text-align:center}
+  footer a{color:var(--sub)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+  .modal.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))}
+  .sheet h3{margin:0 0 12px;font-size:17px}
+  .sheet .btn{margin-top:8px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#2b2622;color:#fff;
+    padding:10px 18px;border-radius:22px;font-size:14px;opacity:0;transition:.25s;z-index:99;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <span class="ico">🥫</span>
+  <h1>ローリングストック</h1>
+  <button class="gear" id="gear" aria-label="設定">⚙️</button>
+</header>
+
+<main>
+  <div class="card buy" id="buyCard">
+    <h2>買い足しリスト</h2>
+    <div id="buyBody"></div>
+  </div>
+
+  <div class="ad-slot"><!-- AdMob等の広告をここに表示 -->広告スペース</div>
+
+  <div class="card">
+    <h2>品目を追加</h2>
+    <form id="addForm" autocomplete="off">
+      <label class="fld">
+        <span>品名（必須）</span>
+        <input id="name" placeholder="例：水（2L）、レトルトごはん" maxlength="30" required>
+      </label>
+      <div class="row2">
+        <label class="fld">
+          <span>現在の数量</span>
+          <input id="qty" type="number" inputmode="numeric" min="0" step="1" placeholder="0">
+        </label>
+        <label class="fld">
+          <span>必要備蓄数（目標）</span>
+          <input id="target" type="number" inputmode="numeric" min="0" step="1" placeholder="例：6">
+        </label>
+      </div>
+      <label class="fld">
+        <span>賞味期限（任意）</span>
+        <input id="date" type="date">
+      </label>
+      <button class="btn btn-primary" type="submit">追加する</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>備蓄一覧（<span id="count">0</span>件）</h2>
+    <ul class="list" id="list"></ul>
+    <p class="empty" id="empty">まだ品目がありません。備蓄している水や食品を、目標の数量とあわせて登録しましょう。使ったら「−」、買い足したら「＋」で数量を回していきます。</p>
+  </div>
+</main>
+
+<footer>
+  <p>データはこの端末内にのみ保存されます。外部送信はありません。</p>
+  <p><a href="../../privacy-rolling-stock.html">プライバシーポリシー</a>　|　<a href="../index.html">アプリ一覧</a></p>
+  <p>© ローリングストック</p>
+</footer>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3>設定</h3>
+    <button class="btn btn-ghost" id="export">データを書き出す（バックアップ）</button>
+    <button class="btn btn-ghost" id="closeModal">閉じる</button>
+    <button class="btn" id="clear" style="background:var(--danger);color:#fff">すべてのデータを削除</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="rolling-stock";
+  // ---- storage helper (shared pattern across all apps) ----
+  var store={
+    get:function(k,d){ try{var v=localStorage.getItem(KEY+":"+k);return v==null?d:JSON.parse(v);}catch(e){return d;} },
+    set:function(k,v){ try{localStorage.setItem(KEY+":"+k,JSON.stringify(v));}catch(e){} },
+    del:function(){ try{Object.keys(localStorage).forEach(function(x){if(x.indexOf(KEY+":")===0)localStorage.removeItem(x);});}catch(e){} }
+  };
+  function $(s){return document.querySelector(s);}
+  function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show");},1800);}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+  var items=store.get("items",[]);  // {id,name,qty,target,date:""|"YYYY-MM-DD"}
+
+  function save(){ store.set("items",items); }
+
+  // ---- local-date helpers (time floored to midnight) ----
+  function todayMid(){ var d=new Date(); return new Date(d.getFullYear(),d.getMonth(),d.getDate()); }
+  function parseDate(s){ var p=String(s).split("-"); return new Date(+p[0],(+p[1])-1,+p[2]); }
+  function daysLeft(s){ return Math.round((parseDate(s)-todayMid())/86400000); }
+  function fmtDate(s){ var p=String(s).split("-"); return (+p[1])+"/"+(+p[2]); }
+  function statusOf(d){ if(d<0)return"danger"; if(d<=3)return"warn"; return"ok"; }
+  function dueLabel(d){ if(d<0)return (-d)+"日過ぎ"; if(d===0)return"今日まで"; return"あと"+d+"日"; }
+
+  function stepper(it){
+    return '<div class="qty">'+
+      '<button class="step" data-act="dec" data-id="'+esc(it.id)+'" aria-label="減らす">−</button>'+
+      '<span class="qnum">'+(it.qty|0)+'</span>'+
+      '<button class="step" data-act="inc" data-id="'+esc(it.id)+'" aria-label="増やす">＋</button>'+
+    '</div>';
+  }
+
+  function render(){
+    // sort by expiry ascending; no-date items go to the end
+    items.sort(function(a,b){
+      if(!a.date && !b.date) return 0;
+      if(!a.date) return 1;
+      if(!b.date) return -1;
+      return parseDate(a.date)-parseDate(b.date);
+    });
+
+    // ---- buy list (qty < target) ----
+    var shorts=items.filter(function(it){ return (it.target|0)>0 && (it.qty|0)<(it.target|0); });
+    var totalLack=shorts.reduce(function(s,it){ return s+((it.target|0)-(it.qty|0)); },0);
+    var buy=$("#buyBody");
+    if(shorts.length){
+      buy.innerHTML=
+        '<div class="short-head">不足 <b>'+totalLack+'個</b>（'+shorts.length+'品目）</div>'+
+        '<ul class="list">'+shorts.map(function(it){
+          var lack=(it.target|0)-(it.qty|0);
+          return '<li data-id="'+esc(it.id)+'">'+
+            '<span class="info"><span class="name">'+esc(it.name)+'</span>'+
+            '<span class="meta"><span class="lack">不足 '+lack+'個</span>（在庫 '+(it.qty|0)+' / 目標 '+(it.target|0)+'）</span></span>'+
+            stepper(it)+
+          '</li>';
+        }).join("")+'</ul>';
+    } else {
+      buy.innerHTML='<p class="empty" style="padding:14px 8px">✅ 買い足しが必要な品目はありません。備蓄は目標を満たしています。</p>';
+    }
+
+    // ---- full stock list ----
+    var list=$("#list"), empty=$("#empty");
+    $("#count").textContent=items.length;
+    empty.style.display=items.length?"none":"block";
+    list.innerHTML=items.map(function(it){
+      var meta=[], dotcls="";
+      if(it.date){
+        var d=daysLeft(it.date), st=statusOf(d);
+        dotcls=st;
+        meta.push('<span class="due '+(st==="ok"?"":st)+'">期限 '+esc(fmtDate(it.date))+'（'+esc(dueLabel(d))+'）</span>');
+      }
+      var qty=it.qty|0, tgt=it.target|0;
+      if(tgt>0){
+        if(qty>=tgt) meta.push('目標 '+tgt+' <span class="goal-hit">達成</span>');
+        else meta.push('目標 '+tgt);
+      }
+      return '<li data-id="'+esc(it.id)+'">'+
+        '<span class="dot '+dotcls+'"></span>'+
+        '<span class="info"><span class="name">'+esc(it.name)+'</span>'+
+        '<span class="meta">'+(meta.length?meta.join("　·　"):"目標未設定")+'</span></span>'+
+        stepper(it)+
+        '<button class="del" data-del="'+esc(it.id)+'" aria-label="削除">🗑</button>'+
+      '</li>';
+    }).join("");
+  }
+
+  // add
+  $("#addForm").addEventListener("submit",function(e){
+    e.preventDefault();
+    var n=$("#name").value.trim();
+    if(!n){ toast("品名を入力してください"); return; }
+    var q=parseInt($("#qty").value,10); if(isNaN(q)||q<0)q=0;
+    var t=parseInt($("#target").value,10); if(isNaN(t)||t<0)t=0;
+    items.push({
+      id:Date.now()+"-"+Math.floor(performance.now()),
+      name:n, qty:q, target:t, date:$("#date").value||""
+    });
+    save();
+    $("#name").value=""; $("#qty").value=""; $("#target").value=""; $("#date").value="";
+    render(); toast("追加しました");
+  });
+
+  // interactions (event delegation on main): +/- and delete
+  $("main").addEventListener("click",function(e){
+    var el=e.target;
+    if(el.classList.contains("step")){
+      var id=el.getAttribute("data-id"), act=el.getAttribute("data-act");
+      var it=items.filter(function(i){return String(i.id)===String(id);})[0];
+      if(!it)return;
+      if(act==="inc"){ it.qty=(it.qty|0)+1; }
+      else{ it.qty=Math.max(0,(it.qty|0)-1); }
+      save(); render();
+      return;
+    }
+    if(el.classList.contains("del")){
+      var did=el.getAttribute("data-del");
+      var target=items.filter(function(i){return String(i.id)===String(did);})[0];
+      if(target && confirm("「"+target.name+"」を一覧から削除しますか？")){
+        items=items.filter(function(i){return String(i.id)!==String(did);});
+        save(); render(); toast("削除しました");
+      }
+    }
+  });
+
+  // settings modal
+  $("#gear").addEventListener("click",function(){$("#modal").classList.add("open");});
+  $("#closeModal").addEventListener("click",function(){$("#modal").classList.remove("open");});
+  $("#modal").addEventListener("click",function(e){if(e.target===this)this.classList.remove("open");});
+  $("#export").addEventListener("click",function(){
+    var data=JSON.stringify({items:items},null,2);
+    try{
+      var b=new Blob([data],{type:"application/json"});
+      var a=document.createElement("a");a.href=URL.createObjectURL(b);
+      a.download="rolling-stock-backup.json";a.click();
+    }catch(e){ prompt("以下をコピーして保存してください",data); }
+  });
+  $("#clear").addEventListener("click",function(){
+    if(confirm("登録した備蓄品目をすべて削除します。よろしいですか？")){
+      store.del(); items=[]; render(); $("#modal").classList.remove("open");
+      toast("削除しました");
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

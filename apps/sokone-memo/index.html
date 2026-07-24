@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17a2a2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="よく買う商品の最安値（底値）を記録。今日の値段が買い時かひと目でわかります。">
+<title>底値メモ｜最安値・買い時チェック</title>
+<style>
+  :root{
+    --accent:#17a2a2; --accent-d:#128383; --accent-soft:#e9f7f7;
+    --bg:#faf7f5; --card:#ffffff; --text:#2b2622; --sub:#8a827b;
+    --line:#eee6e0; --ok:#3fa66a; --warn:#e0952b; --danger:#d9534f;
+    --radius:16px; --shadow:0 2px 12px rgba(80,60,50,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#18140f; --card:#241e18; --text:#f2ece6; --sub:#a89f96;
+      --line:#372f27; --accent-soft:#14312f; --shadow:0 2px 12px rgba(0,0,0,.4);}
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    padding-bottom:env(safe-area-inset-bottom);-webkit-text-size-adjust:100%}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--accent),var(--accent-d));
+    color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  header .ico{font-size:24px;line-height:1}
+  header h1{font-size:18px;margin:0;font-weight:700;flex:1}
+  header button.gear{background:rgba(255,255,255,.2);border:0;color:#fff;font-size:18px;
+    width:36px;height:36px;border-radius:50%;cursor:pointer}
+  main{max-width:640px;margin:0 auto;padding:16px 16px 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  h2{font-size:15px;margin:0 0 12px;color:var(--sub);font-weight:700;letter-spacing:.02em}
+  .btn{appearance:none;border:0;border-radius:12px;padding:13px 18px;font-size:16px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:transform .05s,filter .15s;width:100%}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:var(--accent-soft);color:var(--accent-d)}
+  .btn-sm{width:auto;padding:11px 16px;font-size:15px;border-radius:10px}
+  input,select,textarea{font-family:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--card);color:var(--text);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+  .row{display:flex;gap:8px;align-items:center}
+  label.fld{display:block;font-size:12px;color:var(--sub);margin:0 0 4px 2px;font-weight:600}
+  ul.list{list-style:none;margin:0;padding:0}
+  ul.list li{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--line)}
+  ul.list li:last-child{border-bottom:0}
+  ul.list li.prod{display:block;padding:12px 4px}
+  ul.list li .name{flex:1;word-break:break-word}
+  .del{background:none;border:0;color:var(--danger);font-size:18px;cursor:pointer;padding:4px 8px;flex:0 0 auto}
+  .empty{text-align:center;color:var(--sub);padding:20px 8px;font-size:14px}
+  .ad-slot{margin:16px auto;max-width:640px;min-height:56px;border:1px dashed var(--line);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;background:var(--card)}
+  footer{max-width:640px;margin:0 auto;padding:18px 16px 34px;color:var(--sub);font-size:12px;text-align:center}
+  footer a{color:var(--sub)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+  .modal.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))}
+  .sheet h3{margin:0 0 12px;font-size:17px}
+  .sheet .btn{margin-top:8px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#2b2622;color:#fff;
+    padding:10px 18px;border-radius:22px;font-size:14px;opacity:0;transition:.25s;z-index:99;pointer-events:none;max-width:88%;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  /* app specific */
+  .phead{display:flex;align-items:center;gap:8px;cursor:pointer;padding:2px 0}
+  .caret{color:var(--sub);font-size:12px;width:14px;flex:0 0 auto;text-align:center}
+  .prod .name{flex:1;font-weight:600}
+  .best{font-weight:800;color:var(--accent-d);font-size:15px;white-space:nowrap}
+  .bmeta{font-size:12px;color:var(--sub);padding:3px 0 0 22px}
+  .bmeta .cnt{background:var(--accent-soft);color:var(--accent-d);padding:1px 8px;border-radius:20px;margin-left:6px}
+  .phist{margin:9px 0 2px 22px;border-left:2px solid var(--accent-soft);padding-left:12px}
+  .hrec{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .hrec:last-child{border-bottom:0}
+  .hprice{font-weight:700;min-width:74px}
+  .hprice.isbest{color:var(--accent-d)}
+  .hprice .lo{font-size:11px;background:var(--accent-soft);color:var(--accent-d);padding:0 6px;border-radius:20px;margin-left:4px;font-weight:700}
+  .hmeta{flex:1;color:var(--sub);font-size:13px;word-break:break-word}
+</style>
+</head>
+<body>
+<header>
+  <span class="ico">🏷️</span>
+  <h1>底値メモ</h1>
+  <button class="gear" id="gear" aria-label="設定">⚙️</button>
+</header>
+
+<main>
+  <div class="card">
+    <h2>価格を記録</h2>
+    <form id="recForm" autocomplete="off">
+      <label class="fld" for="pname">商品名</label>
+      <input id="pname" list="plist" placeholder="例：牛乳（既存を選ぶか新しく入力）" maxlength="40" required>
+      <datalist id="plist"></datalist>
+      <div class="row" style="margin-top:10px">
+        <div style="flex:1">
+          <label class="fld" for="price">価格（円）</label>
+          <input id="price" type="number" inputmode="numeric" min="1" step="1" placeholder="198" required>
+        </div>
+        <div style="flex:1">
+          <label class="fld" for="shop">店名（任意）</label>
+          <input id="shop" placeholder="例：〇〇スーパー" maxlength="30">
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;align-items:flex-end">
+        <div style="flex:1">
+          <label class="fld" for="date">日付</label>
+          <input id="date" type="date">
+        </div>
+        <button class="btn btn-primary btn-sm" type="submit">記録する</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="ad-slot"><!-- AdMob等の広告をここに表示 -->広告スペース</div>
+
+  <div class="card">
+    <h2>商品一覧（<span id="count">0</span>件）</h2>
+    <ul class="list" id="list"></ul>
+    <p class="empty" id="empty">まだ記録がありません。よく買う商品の価格を記録して、底値（最安値）をチェックしましょう。</p>
+  </div>
+</main>
+
+<footer>
+  <p>データはこの端末内にのみ保存されます。外部送信はありません。</p>
+  <p><a href="../../privacy-sokone-memo.html">プライバシーポリシー</a>　|　<a href="../index.html">アプリ一覧</a></p>
+  <p>© 底値メモ</p>
+</footer>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3>設定</h3>
+    <button class="btn btn-ghost" id="export">データを書き出す（バックアップ）</button>
+    <button class="btn btn-ghost" id="closeModal">閉じる</button>
+    <button class="btn" id="clear" style="background:var(--danger);color:#fff">すべてのデータを削除</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="sokone-memo";
+  // ---- storage helper (shared pattern across all apps) ----
+  var store={
+    get:function(k,d){ try{var v=localStorage.getItem(KEY+":"+k);return v==null?d:JSON.parse(v);}catch(e){return d;} },
+    set:function(k,v){ try{localStorage.setItem(KEY+":"+k,JSON.stringify(v));}catch(e){} },
+    del:function(){ try{Object.keys(localStorage).forEach(function(x){if(x.indexOf(KEY+":")===0)localStorage.removeItem(x);});}catch(e){} }
+  };
+  function $(s){return document.querySelector(s);}
+  function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show");},2000);}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function fmt(n){ return Number(n).toLocaleString("ja-JP"); }
+  function yen(n){ return "¥"+fmt(n); }
+  function todayISO(){ var d=new Date(); var m=("0"+(d.getMonth()+1)).slice(-2), day=("0"+d.getDate()).slice(-2); return d.getFullYear()+"-"+m+"-"+day; }
+  function mdate(iso){ if(!iso)return""; var p=String(iso).split("-"); return p.length<3?iso:(parseInt(p[1],10)+"/"+parseInt(p[2],10)); }
+
+  var records=store.get("records",[]); // {id,t,name,price,shop,date}
+  var expanded={};                     // name -> true (in-memory only)
+
+  function save(){ store.set("records",records); }
+
+  function groupsByName(){
+    var map={};
+    records.forEach(function(r){ (map[r.name]=map[r.name]||[]).push(r); });
+    return map;
+  }
+
+  function render(){
+    var map=groupsByName();
+    var keys=Object.keys(map);
+    // sort products by most recent record first
+    keys.sort(function(a,b){
+      var ta=Math.max.apply(null,map[a].map(function(r){return r.t||0;}));
+      var tb=Math.max.apply(null,map[b].map(function(r){return r.t||0;}));
+      return tb-ta;
+    });
+    $("#count").textContent=keys.length;
+    $("#empty").style.display=keys.length?"none":"block";
+    // datalist of existing product names
+    $("#plist").innerHTML=keys.map(function(n){return '<option value="'+esc(n)+'"></option>';}).join("");
+
+    $("#list").innerHTML=keys.map(function(name){
+      var recs=map[name].slice();
+      var best=recs.reduce(function(a,b){return b.price<a.price?b:a;});
+      var open=!!expanded[name];
+      recs.sort(function(a,b){ if(a.date!==b.date)return a.date<b.date?1:-1; return (b.t||0)-(a.t||0); });
+      var histHtml=recs.map(function(r){
+        var isbest=r.id===best.id;
+        return '<div class="hrec">'+
+          '<span class="hprice'+(isbest?' isbest':'')+'">'+yen(r.price)+(isbest?'<span class="lo">最安</span>':'')+'</span>'+
+          '<span class="hmeta">'+(r.shop?esc(r.shop)+'・':'')+mdate(r.date)+'</span>'+
+          '<button class="del hdel" data-rid="'+esc(r.id)+'" aria-label="この記録を削除">🗑</button>'+
+          '</div>';
+      }).join("");
+      return '<li class="prod'+(open?' open':'')+'" data-name="'+esc(name)+'">'+
+        '<div class="phead">'+
+          '<span class="caret">'+(open?'▾':'▸')+'</span>'+
+          '<span class="name">'+esc(name)+'</span>'+
+          '<span class="best">'+yen(best.price)+'</span>'+
+          '<button class="del pdel" aria-label="商品ごと削除">🗑</button>'+
+        '</div>'+
+        '<div class="bmeta">底値: '+(best.shop?esc(best.shop)+'・':'')+mdate(best.date)+
+          '<span class="cnt">'+recs.length+'件</span></div>'+
+        (open?'<div class="phist">'+histHtml+'</div>':'')+
+        '</li>';
+    }).join("");
+  }
+
+  // add record
+  $("#recForm").addEventListener("submit",function(e){
+    e.preventDefault();
+    var name=$("#pname").value.trim();
+    var price=parseInt($("#price").value,10);
+    if(!name){ toast("商品名を入力してください"); return; }
+    if(!(price>0)){ toast("正しい価格を入力してください"); return; }
+    var shop=$("#shop").value.trim();
+    var date=$("#date").value||todayISO();
+    var existing=records.filter(function(r){return r.name===name;});
+    var prevMin=existing.length?Math.min.apply(null,existing.map(function(r){return r.price;})):null;
+    records.push({id:Date.now()+"-"+Math.floor(Math.random()*1e6),t:Date.now(),name:name,price:price,shop:shop,date:date});
+    save();
+    if(prevMin==null){ toast("初めての記録です。底値に設定しました"); }
+    else if(price<prevMin){ toast("底値更新！買い時です 🎉"); }
+    else if(price===prevMin){ toast("底値と同じです"); }
+    else{ toast("底値より "+fmt(price-prevMin)+"円 高い"); }
+    expanded[name]=true;
+    $("#pname").value=""; $("#price").value=""; $("#shop").value=""; $("#date").value=todayISO();
+    render(); $("#pname").focus();
+  });
+
+  // list interactions (delegation)
+  $("#list").addEventListener("click",function(e){
+    var pdel=e.target.closest(".pdel");
+    if(pdel){
+      var nm=pdel.closest("li").getAttribute("data-name");
+      if(confirm("「"+nm+"」の価格記録をすべて削除しますか？")){
+        records=records.filter(function(r){return r.name!==nm;});
+        delete expanded[nm]; save(); render(); toast("削除しました");
+      }
+      return;
+    }
+    var hdel=e.target.closest(".hdel");
+    if(hdel){
+      var rid=hdel.getAttribute("data-rid");
+      records=records.filter(function(r){return String(r.id)!==String(rid);});
+      save(); render();
+      return;
+    }
+    var phead=e.target.closest(".phead");
+    if(phead){
+      var name=phead.closest("li").getAttribute("data-name");
+      expanded[name]=!expanded[name];
+      render();
+    }
+  });
+
+  // settings modal
+  $("#gear").addEventListener("click",function(){$("#modal").classList.add("open");});
+  $("#closeModal").addEventListener("click",function(){$("#modal").classList.remove("open");});
+  $("#modal").addEventListener("click",function(e){if(e.target===this)this.classList.remove("open");});
+  $("#export").addEventListener("click",function(){
+    var data=JSON.stringify({app:KEY,records:records},null,2);
+    try{
+      var b=new Blob([data],{type:"application/json"});
+      var a=document.createElement("a");a.href=URL.createObjectURL(b);
+      a.download="sokone-memo-backup.json";a.click();
+      setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
+    }catch(e){ prompt("以下をコピーして保存してください",data); }
+  });
+  $("#clear").addEventListener("click",function(){
+    if(confirm("すべての価格記録を削除します。よろしいですか？")){
+      store.del(); records=[]; expanded={}; render(); $("#modal").classList.remove("open");
+      toast("削除しました");
+    }
+  });
+
+  $("#date").value=todayISO();
+  render();
+})();
+</script>
+</body>
+</html>

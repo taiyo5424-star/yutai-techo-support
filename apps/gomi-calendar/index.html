@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2fa39a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="地域のゴミ収集日を登録して、今日・明日出すゴミがひと目でわかります。">
+<title>ゴミ出しカレンダー｜今日・明日のゴミがわかる</title>
+<style>
+  :root{
+    --accent:#2fa39a; --accent-d:#24827b; --accent-soft:#e8f6f4;
+    --bg:#f5f9f8; --card:#ffffff; --text:#25302e; --sub:#7d8b88;
+    --line:#e2ece9; --ok:#3fa66a; --warn:#e0952b; --danger:#d9534f;
+    --radius:16px; --shadow:0 2px 12px rgba(40,80,75,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#101816; --card:#182420; --text:#e8f2ef; --sub:#94a29e;
+      --line:#26362f; --accent-soft:#173230; --shadow:0 2px 12px rgba(0,0,0,.4);}
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    padding-bottom:env(safe-area-inset-bottom);-webkit-text-size-adjust:100%}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--accent),var(--accent-d));
+    color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  header .ico{font-size:24px;line-height:1}
+  header h1{font-size:18px;margin:0;font-weight:700;flex:1}
+  header button.gear{background:rgba(255,255,255,.2);border:0;color:#fff;font-size:18px;
+    width:36px;height:36px;border-radius:50%;cursor:pointer}
+  main{max-width:640px;margin:0 auto;padding:16px 16px 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  h2{font-size:15px;margin:0 0 12px;color:var(--sub);font-weight:700;letter-spacing:.02em}
+  .btn{appearance:none;border:0;border-radius:12px;padding:13px 18px;font-size:16px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:transform .05s,filter .15s;width:100%}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:var(--accent-soft);color:var(--accent-d)}
+  .btn-sm{width:auto;padding:8px 14px;font-size:14px;border-radius:10px}
+  label{font-size:13px;color:var(--sub);font-weight:600;display:block;margin:2px 0 5px}
+  input,select,textarea{font-family:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--card);color:var(--text);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+  .row{display:flex;gap:8px;align-items:center}
+  .field{margin-bottom:12px}
+  ul.list{list-style:none;margin:0;padding:0}
+  ul.list li{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--line)}
+  ul.list li:last-child{border-bottom:0}
+  ul.list li .name{flex:1;word-break:break-word}
+  ul.list li .tag{font-size:12px;color:var(--sub);background:var(--bg);padding:2px 8px;border-radius:20px}
+  .del{background:none;border:0;color:var(--danger);font-size:18px;cursor:pointer;padding:4px 8px}
+  .empty{text-align:center;color:var(--sub);padding:20px 8px;font-size:14px}
+  .ad-slot{margin:16px auto;max-width:640px;min-height:56px;border:1px dashed var(--line);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;background:var(--card)}
+  footer{max-width:640px;margin:0 auto;padding:18px 16px 34px;color:var(--sub);font-size:12px;text-align:center}
+  footer a{color:var(--sub)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+  .modal.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))}
+  .sheet h3{margin:0 0 12px;font-size:17px}
+  .sheet .btn{margin-top:8px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#25302e;color:#fff;
+    padding:10px 18px;border-radius:22px;font-size:14px;opacity:0;transition:.25s;z-index:99;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* ---- app specific ---- */
+  .datehead{text-align:center;color:var(--sub);font-size:13px;margin:0 0 12px;font-weight:600}
+  .hero{display:flex;gap:12px;margin-bottom:14px}
+  .hero-card{flex:1;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 14px 16px;box-shadow:var(--shadow);min-height:104px}
+  .hero-card.today{background:var(--accent-soft);border-color:var(--accent)}
+  .hlabel{font-size:13px;font-weight:700;color:var(--sub);display:flex;align-items:center;gap:6px;margin-bottom:8px}
+  .hero-card.today .hlabel{color:var(--accent-d)}
+  .hlabel .badge{background:var(--accent);color:#fff;font-size:11px;padding:1px 8px;border-radius:20px}
+  .hbody .g{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:700;margin:5px 0;word-break:break-word}
+  .hero-card.today .hbody .g{color:var(--accent-d)}
+  .hbody .rest{color:var(--sub);font-size:14px;font-weight:600}
+  .dot{width:12px;height:12px;border-radius:50%;flex:0 0 auto;box-shadow:0 0 0 2px rgba(0,0,0,.04) inset}
+  ul.week{list-style:none;margin:0;padding:0}
+  ul.week li{display:flex;gap:12px;padding:10px 4px;border-bottom:1px solid var(--line);align-items:flex-start}
+  ul.week li:last-child{border-bottom:0}
+  ul.week li.is-today{background:var(--accent-soft);border-radius:10px;margin:0 -6px;padding:10px}
+  ul.week .wd{flex:0 0 58px;font-weight:700;font-size:14px}
+  ul.week .wd .md{display:block;font-size:12px;color:var(--sub);font-weight:600}
+  ul.week li.is-today .wd{color:var(--accent-d)}
+  ul.week .wd.sun{color:#d9534f}
+  ul.week .wd.sat{color:#3f7fd9}
+  ul.week .items{flex:1;display:flex;flex-wrap:wrap;gap:6px;padding-top:1px}
+  ul.week .chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;
+    background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:3px 10px}
+  ul.week .none{color:var(--sub);font-size:13px;padding-top:2px}
+  .dow-group{display:flex;gap:6px;flex-wrap:wrap}
+  .dow{flex:1;min-width:38px}
+  .dow input{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
+  .dow span{display:block;text-align:center;padding:9px 0;border:1px solid var(--line);border-radius:10px;
+    font-size:15px;font-weight:700;color:var(--sub);cursor:pointer;user-select:none;background:var(--card)}
+  .dow input:checked + span{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .dow-group .d0 span{color:#d9534f}
+  .dow-group .d6 span{color:#3f7fd9}
+  .dow input:checked + span{color:#fff}
+  .swatches{display:flex;gap:8px;flex-wrap:wrap}
+  .swatch{width:30px;height:30px;border-radius:50%;cursor:pointer;border:2px solid transparent;position:relative}
+  .swatch.sel{border-color:var(--text)}
+  .swatch.sel::after{content:"✓";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:900;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+  .freqtag{font-size:11px;color:var(--sub);background:var(--bg);padding:1px 7px;border-radius:12px;margin-left:2px}
+</style>
+</head>
+<body>
+<header>
+  <span class="ico">🗑️</span>
+  <h1>ゴミ出しカレンダー</h1>
+  <button class="gear" id="gear" aria-label="設定">⚙️</button>
+</header>
+
+<main>
+  <p class="datehead" id="dateHead"></p>
+
+  <div class="hero">
+    <div class="hero-card today" id="todayCard">
+      <div class="hlabel">🗑️ 今日のゴミ <span class="badge">TODAY</span></div>
+      <div class="hbody" id="todayBody"></div>
+    </div>
+    <div class="hero-card tomo">
+      <div class="hlabel">📅 明日のゴミ</div>
+      <div class="hbody" id="tomoBody"></div>
+    </div>
+  </div>
+
+  <div class="ad-slot"><!-- AdMob等の広告をここに表示 -->広告スペース</div>
+
+  <div class="card">
+    <h2>これからの1週間</h2>
+    <ul class="week" id="week"></ul>
+  </div>
+
+  <div class="card">
+    <h2>ゴミの種類を追加</h2>
+    <form id="addForm" autocomplete="off">
+      <div class="field">
+        <label for="name">種類名</label>
+        <input id="name" placeholder="例：燃えるゴミ / プラ / 缶・びん" maxlength="20" required>
+      </div>
+      <div class="field">
+        <label>収集する曜日（複数選択できます）</label>
+        <div class="dow-group" id="dowGroup"></div>
+      </div>
+      <div class="field row" style="gap:10px">
+        <div style="flex:1">
+          <label for="freq">頻度</label>
+          <select id="freq">
+            <option value="weekly">毎週</option>
+            <option value="biweekly">隔週</option>
+          </select>
+        </div>
+        <div style="flex:1" id="wkWrap" hidden>
+          <label for="wk">隔週の週</label>
+          <select id="wk">
+            <option value="this">今週から</option>
+            <option value="next">来週から</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>色分け</label>
+        <div class="swatches" id="swatches"></div>
+      </div>
+      <button class="btn btn-primary" type="submit">この曜日で登録する</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>登録済みのゴミ（<span id="count">0</span>件）</h2>
+    <ul class="list" id="list"></ul>
+    <p class="empty" id="empty">まだ登録がありません。上のフォームからお住まいの地域のゴミ収集日を登録しましょう。</p>
+  </div>
+</main>
+
+<footer>
+  <p>データはこの端末内にのみ保存されます。外部送信はありません。</p>
+  <p><a href="../../privacy-gomi-calendar.html">プライバシーポリシー</a>　|　<a href="../index.html">アプリ一覧</a></p>
+  <p>© ゴミ出しカレンダー</p>
+</footer>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3>設定</h3>
+    <button class="btn btn-ghost" id="export">データを書き出す（バックアップ）</button>
+    <button class="btn btn-ghost" id="closeModal">閉じる</button>
+    <button class="btn" id="clear" style="background:var(--danger);color:#fff">すべてのデータを削除</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="gomi-calendar";
+  // ---- storage helper (shared pattern across all apps) ----
+  var store={
+    get:function(k,d){ try{var v=localStorage.getItem(KEY+":"+k);return v==null?d:JSON.parse(v);}catch(e){return d;} },
+    set:function(k,v){ try{localStorage.setItem(KEY+":"+k,JSON.stringify(v));}catch(e){} },
+    del:function(){ try{Object.keys(localStorage).forEach(function(x){if(x.indexOf(KEY+":")===0)localStorage.removeItem(x);});}catch(e){} }
+  };
+  function $(s){return document.querySelector(s);}
+  function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show");},1800);}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+  var WD=["日","月","火","水","木","金","土"];
+  var COLORS=["#2fa39a","#e2504a","#e0952b","#3fa66a","#3f7fd9","#8a5cd9","#d94f9e","#5a6b7b"];
+
+  var items=store.get("items",[]);   // {id,name,days:[0..6],freq:'weekly'|'biweekly',wk:0|1,color}
+  var selDays={}, selColor=COLORS[0];
+
+  function save(){ store.set("items",items); }
+
+  // date helpers
+  function startOfDay(d){ return new Date(d.getFullYear(),d.getMonth(),d.getDate()); }
+  function addDays(d,n){ var x=startOfDay(d); x.setDate(x.getDate()+n); return x; }
+  function weekIndex(d){ // integer count of weeks (Sunday based) since a fixed Sunday
+    var s=startOfDay(d); s.setDate(s.getDate()-s.getDay());
+    var base=new Date(1970,0,4); // Sunday
+    return Math.round((s-base)/(7*86400000));
+  }
+  function collectsOn(it,d){
+    if(it.days.indexOf(d.getDay())<0) return false;
+    if(it.freq==="biweekly" && (weekIndex(d)%2)!==it.wk) return false;
+    return true;
+  }
+  function itemsFor(d){ return items.filter(function(it){return collectsOn(it,d);}); }
+
+  function dotHtml(c){ return '<span class="dot" style="background:'+esc(c)+'"></span>'; }
+
+  function renderHero(){
+    var today=new Date(), tomo=addDays(today,1);
+    var dd=today;
+    $("#dateHead").textContent="今日は "+(dd.getMonth()+1)+"月"+dd.getDate()+"日（"+WD[dd.getDay()]+"）です";
+    var tItems=itemsFor(today), mItems=itemsFor(tomo);
+    var tc=$("#todayCard");
+    if(tItems.length){
+      tc.classList.add("today");
+      $("#todayBody").innerHTML=tItems.map(function(it){
+        return '<div class="g">'+dotHtml(it.color)+esc(it.name)+'</div>';
+      }).join("");
+    }else{
+      tc.classList.remove("today");
+      $("#todayBody").innerHTML='<div class="rest">今日はお休みです 🍵</div>';
+    }
+    $("#tomoBody").innerHTML=mItems.length
+      ? mItems.map(function(it){return '<div class="g">'+dotHtml(it.color)+esc(it.name)+'</div>';}).join("")
+      : '<div class="rest">明日はお休みです</div>';
+  }
+
+  function renderWeek(){
+    var ul=$("#week"), today=new Date(), html="";
+    for(var i=0;i<7;i++){
+      var d=addDays(today,i), list=itemsFor(d);
+      var cls=WD[d.getDay()]==="日"?"sun":(WD[d.getDay()]==="土"?"sat":"");
+      var lbl=i===0?"今日":(i===1?"明日":WD[d.getDay()]+"曜");
+      html+='<li class="'+(i===0?"is-today":"")+'">'+
+        '<div class="wd '+cls+'">'+lbl+'<span class="md">'+(d.getMonth()+1)+'/'+d.getDate()+'</span></div>'+
+        '<div class="items">'+
+        (list.length
+          ? list.map(function(it){return '<span class="chip">'+dotHtml(it.color)+esc(it.name)+'</span>';}).join("")
+          : '<span class="none">収集なし</span>')+
+        '</div></li>';
+    }
+    ul.innerHTML=html;
+  }
+
+  function renderList(){
+    var list=$("#list"), empty=$("#empty");
+    $("#count").textContent=items.length;
+    empty.style.display=items.length?"none":"block";
+    list.innerHTML=items.map(function(it){
+      var days=it.days.slice().sort(function(a,b){return a-b;}).map(function(x){return WD[x];}).join("・");
+      var fq=it.freq==="biweekly"?'<span class="freqtag">隔週</span>':'';
+      return '<li data-id="'+esc(String(it.id))+'">'+dotHtml(it.color)+
+        '<span class="name">'+esc(it.name)+'<br><span class="tag">'+esc(days)+'</span>'+fq+'</span>'+
+        '<button class="del" aria-label="削除">🗑</button></li>';
+    }).join("");
+  }
+
+  function render(){ renderHero(); renderWeek(); renderList(); }
+
+  // build weekday toggles
+  (function(){
+    var g=$("#dowGroup");
+    g.innerHTML=WD.map(function(w,i){
+      return '<label class="dow d'+i+'"><input type="checkbox" data-d="'+i+'"><span>'+w+'</span></label>';
+    }).join("");
+    g.addEventListener("change",function(e){
+      var t=e.target; if(t.getAttribute("data-d")==null) return;
+      selDays[t.getAttribute("data-d")]=t.checked;
+    });
+  })();
+  // build color swatches
+  (function(){
+    var s=$("#swatches");
+    s.innerHTML=COLORS.map(function(c,i){
+      return '<div class="swatch'+(i===0?" sel":"")+'" data-c="'+esc(c)+'" style="background:'+esc(c)+'"></div>';
+    }).join("");
+    s.addEventListener("click",function(e){
+      var sw=e.target.closest(".swatch"); if(!sw)return;
+      selColor=sw.getAttribute("data-c");
+      Array.prototype.forEach.call(s.children,function(el){el.classList.remove("sel");});
+      sw.classList.add("sel");
+    });
+  })();
+  // freq -> show biweekly week choice
+  $("#freq").addEventListener("change",function(){
+    $("#wkWrap").hidden = this.value!=="biweekly";
+  });
+
+  // add
+  $("#addForm").addEventListener("submit",function(e){
+    e.preventDefault();
+    var n=$("#name").value.trim(); if(!n){ toast("種類名を入力してください"); return; }
+    var days=[]; for(var i=0;i<7;i++){ if(selDays[i]) days.push(i); }
+    if(!days.length){ toast("収集する曜日を選んでください"); return; }
+    var freq=$("#freq").value, wk=0;
+    if(freq==="biweekly"){
+      var base=weekIndex(new Date())%2;
+      wk = $("#wk").value==="next" ? (base^1) : base;
+    }
+    items.push({id:Date.now()+"-"+Math.floor(performance.now()),name:n,days:days,freq:freq,wk:wk,color:selColor});
+    save(); render();
+    // reset form
+    $("#name").value="";
+    selDays={};
+    Array.prototype.forEach.call($("#dowGroup").querySelectorAll("input"),function(c){c.checked=false;});
+    toast("登録しました");
+  });
+
+  // delete
+  $("#list").addEventListener("click",function(e){
+    if(!e.target.classList.contains("del"))return;
+    var id=e.target.closest("li").getAttribute("data-id");
+    items=items.filter(function(i){return String(i.id)!==String(id);});
+    save(); render(); toast("削除しました");
+  });
+
+  // settings modal
+  $("#gear").addEventListener("click",function(){$("#modal").classList.add("open");});
+  $("#closeModal").addEventListener("click",function(){$("#modal").classList.remove("open");});
+  $("#modal").addEventListener("click",function(e){if(e.target===this)this.classList.remove("open");});
+  $("#export").addEventListener("click",function(){
+    var data=JSON.stringify({items:items},null,2);
+    try{
+      var b=new Blob([data],{type:"application/json"});
+      var a=document.createElement("a");a.href=URL.createObjectURL(b);
+      a.download="gomi-calendar-backup.json";a.click();
+    }catch(e){ prompt("以下をコピーして保存してください",data); }
+  });
+  $("#clear").addEventListener("click",function(){
+    if(confirm("登録したゴミの種類をすべて削除します。よろしいですか？")){
+      store.del(); items=[]; selDays={}; render(); $("#modal").classList.remove("open");
+      toast("削除しました");
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

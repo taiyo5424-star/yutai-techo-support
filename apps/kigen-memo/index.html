@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3fa66a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="食材の賞味期限をまとめて管理。期限が近い順に並び、食品ロスを防ぎます。">
+<title>賞味期限メモ｜食材の期限をまとめて管理</title>
+<style>
+  :root{
+    --accent:#3fa66a; --accent-d:#2f8a54; --accent-soft:#edf7f0;
+    --bg:#faf7f5; --card:#ffffff; --text:#2b2622; --sub:#8a827b;
+    --line:#eee6e0; --ok:#3fa66a; --warn:#e0952b; --danger:#d9534f;
+    --radius:16px; --shadow:0 2px 12px rgba(80,60,50,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#18140f; --card:#241e18; --text:#f2ece6; --sub:#a89f96;
+      --line:#372f27; --accent-soft:#1f3326; --shadow:0 2px 12px rgba(0,0,0,.4);}
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    padding-bottom:env(safe-area-inset-bottom);-webkit-text-size-adjust:100%}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--accent),var(--accent-d));
+    color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  header .ico{font-size:24px;line-height:1}
+  header h1{font-size:18px;margin:0;font-weight:700;flex:1}
+  header button.gear{background:rgba(255,255,255,.2);border:0;color:#fff;font-size:18px;
+    width:36px;height:36px;border-radius:50%;cursor:pointer}
+  main{max-width:640px;margin:0 auto;padding:16px 16px 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  h2{font-size:15px;margin:0 0 12px;color:var(--sub);font-weight:700;letter-spacing:.02em}
+  .btn{appearance:none;border:0;border-radius:12px;padding:13px 18px;font-size:16px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:transform .05s,filter .15s;width:100%}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:var(--accent-soft);color:var(--accent-d)}
+  .btn-sm{width:auto;padding:8px 14px;font-size:14px;border-radius:10px}
+  input,select,textarea{font-family:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--card);color:var(--text);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+  label.fld{display:block;margin-bottom:10px}
+  label.fld span{display:block;font-size:13px;color:var(--sub);margin-bottom:4px;font-weight:600}
+  .row{display:flex;gap:8px;align-items:center}
+  .row2{display:flex;gap:10px}
+  .row2>*{flex:1}
+  /* summary banner */
+  .summary{display:flex;gap:10px;margin-bottom:14px}
+  .summary .box{flex:1;text-align:center;background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);padding:14px 6px;box-shadow:var(--shadow)}
+  .summary .box .num{font-size:26px;font-weight:800;line-height:1.1}
+  .summary .box .lbl{font-size:12px;color:var(--sub);margin-top:2px}
+  .summary .box.bad .num{color:var(--danger)}
+  .summary .box.soon .num{color:var(--warn)}
+  .summary.clear{display:block;text-align:center;background:var(--accent-soft);color:var(--accent-d);
+    border-radius:var(--radius);padding:14px 12px;font-weight:700;font-size:14px}
+  /* food list */
+  ul.list{list-style:none;margin:0;padding:0}
+  ul.list li{display:flex;align-items:center;gap:11px;padding:12px 4px;border-bottom:1px solid var(--line)}
+  ul.list li:last-child{border-bottom:0}
+  .dot{width:12px;height:12px;border-radius:50%;flex:none;background:var(--ok)}
+  .dot.warn{background:var(--warn)}
+  .dot.danger{background:var(--danger)}
+  li .info{flex:1;min-width:0}
+  li .info .name{font-weight:700;word-break:break-word}
+  li .info .meta{font-size:12px;color:var(--sub)}
+  li .info .meta .place{background:var(--bg);padding:1px 7px;border-radius:20px;margin-right:6px}
+  li .left{font-size:13px;font-weight:700;text-align:right;flex:none;min-width:62px}
+  li .left.warn{color:var(--warn)}
+  li .left.danger{color:var(--danger)}
+  li .left small{display:block;font-size:11px;color:var(--sub);font-weight:400}
+  .del{background:none;border:0;color:var(--accent-d);font-size:13px;font-weight:700;cursor:pointer;
+    padding:6px 8px;flex:none;border-radius:8px}
+  .del:active{background:var(--accent-soft)}
+  .empty{text-align:center;color:var(--sub);padding:22px 8px;font-size:14px}
+  .ad-slot{margin:16px auto;max-width:640px;min-height:56px;border:1px dashed var(--line);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;background:var(--card)}
+  footer{max-width:640px;margin:0 auto;padding:18px 16px 34px;color:var(--sub);font-size:12px;text-align:center}
+  footer a{color:var(--sub)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+  .modal.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))}
+  .sheet h3{margin:0 0 12px;font-size:17px}
+  .sheet .btn{margin-top:8px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#2b2622;color:#fff;
+    padding:10px 18px;border-radius:22px;font-size:14px;opacity:0;transition:.25s;z-index:99;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <span class="ico">🥬</span>
+  <h1>賞味期限メモ</h1>
+  <button class="gear" id="gear" aria-label="設定">⚙️</button>
+</header>
+
+<main>
+  <div id="summary"></div>
+
+  <div class="ad-slot"><!-- AdMob等の広告をここに表示 -->広告スペース</div>
+
+  <div class="card">
+    <h2>食材を追加</h2>
+    <form id="addForm" autocomplete="off">
+      <label class="fld">
+        <span>食材名（必須）</span>
+        <input id="name" placeholder="例：牛乳、鶏むね肉" maxlength="30" required>
+      </label>
+      <label class="fld">
+        <span>賞味・消費期限（必須）</span>
+        <input id="date" type="date" required>
+      </label>
+      <div class="row2">
+        <label class="fld">
+          <span>保存場所</span>
+          <select id="place">
+            <option value="">選択なし</option>
+            <option>冷蔵</option>
+            <option>冷凍</option>
+            <option>常温</option>
+          </select>
+        </label>
+        <label class="fld">
+          <span>個数</span>
+          <input id="qty" type="number" inputmode="numeric" min="1" step="1" placeholder="任意">
+        </label>
+      </div>
+      <button class="btn btn-primary" type="submit">追加する</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>食材一覧（<span id="count">0</span>件）</h2>
+    <ul class="list" id="list"></ul>
+    <p class="empty" id="empty">まだ食材が登録されていません。買った食材と期限を追加すると、期限が近い順に並びます。</p>
+  </div>
+</main>
+
+<footer>
+  <p>データはこの端末内にのみ保存されます。外部送信はありません。</p>
+  <p><a href="../../privacy-kigen-memo.html">プライバシーポリシー</a>　|　<a href="../index.html">アプリ一覧</a></p>
+  <p>© 賞味期限メモ</p>
+</footer>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3>設定</h3>
+    <button class="btn btn-ghost" id="export">データを書き出す（バックアップ）</button>
+    <button class="btn btn-ghost" id="closeModal">閉じる</button>
+    <button class="btn" id="clear" style="background:var(--danger);color:#fff">すべてのデータを削除</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="kigen-memo";
+  // ---- storage helper (shared pattern across all apps) ----
+  var store={
+    get:function(k,d){ try{var v=localStorage.getItem(KEY+":"+k);return v==null?d:JSON.parse(v);}catch(e){return d;} },
+    set:function(k,v){ try{localStorage.setItem(KEY+":"+k,JSON.stringify(v));}catch(e){} },
+    del:function(){ try{Object.keys(localStorage).forEach(function(x){if(x.indexOf(KEY+":")===0)localStorage.removeItem(x);});}catch(e){} }
+  };
+  function $(s){return document.querySelector(s);}
+  function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show");},1800);}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+  var items=store.get("items",[]);  // {id,name,date:"YYYY-MM-DD",place,qty}
+
+  function save(){ store.set("items",items); }
+
+  // ---- local-date helpers (time floored to midnight) ----
+  function todayMid(){ var d=new Date(); return new Date(d.getFullYear(),d.getMonth(),d.getDate()); }
+  function parseDate(s){ var p=String(s).split("-"); return new Date(+p[0],(+p[1])-1,+p[2]); }
+  function daysLeft(s){ return Math.round((parseDate(s)-todayMid())/86400000); }
+  function fmtDate(s){ var p=String(s).split("-"); return (+p[1])+"/"+(+p[2]); }
+
+  // classify: -1 expired / 0 soon(<=3) / 1 normal
+  function statusOf(d){ if(d<0)return"danger"; if(d<=3)return"warn"; return"ok"; }
+  function leftLabel(d){
+    if(d<0) return (-d)+"日過ぎ";
+    if(d===0) return "今日まで";
+    return "あと"+d+"日";
+  }
+
+  function render(){
+    // sort ascending by date (soonest first)
+    items.sort(function(a,b){ return parseDate(a.date)-parseDate(b.date); });
+
+    var expired=0, soon=0;
+    items.forEach(function(it){
+      var d=daysLeft(it.date);
+      if(d<0)expired++; else if(d<=3)soon++;
+    });
+
+    var sum=$("#summary");
+    if(expired||soon){
+      sum.innerHTML=
+        '<div class="summary">'+
+          '<div class="box bad"><div class="num">'+expired+'</div><div class="lbl">期限切れ</div></div>'+
+          '<div class="box soon"><div class="num">'+soon+'</div><div class="lbl">まもなく（3日以内）</div></div>'+
+        '</div>';
+    } else {
+      sum.innerHTML='<div class="summary clear">✅ 期限が近い食材はありません</div>';
+    }
+
+    var list=$("#list"), empty=$("#empty");
+    $("#count").textContent=items.length;
+    empty.style.display=items.length?"none":"block";
+    list.innerHTML=items.map(function(it){
+      var d=daysLeft(it.date);
+      var st=statusOf(d);
+      var cls=st==="ok"?"":st;
+      var meta=[];
+      if(it.place) meta.push('<span class="place">'+esc(it.place)+'</span>');
+      meta.push(esc(fmtDate(it.date))+"まで");
+      if(it.qty) meta.push("×"+esc(it.qty));
+      return '<li data-id="'+esc(it.id)+'">'+
+        '<span class="dot '+cls+'"></span>'+
+        '<span class="info"><span class="name">'+esc(it.name)+'</span>'+
+        '<span class="meta">'+meta.join(" ")+'</span></span>'+
+        '<span class="left '+cls+'">'+esc(leftLabel(d))+'</span>'+
+        '<button class="del" aria-label="削除">食べた</button>'+
+      '</li>';
+    }).join("");
+  }
+
+  // add
+  $("#addForm").addEventListener("submit",function(e){
+    e.preventDefault();
+    var n=$("#name").value.trim();
+    var dt=$("#date").value;
+    if(!n){ toast("食材名を入力してください"); return; }
+    if(!dt){ toast("期限を入力してください"); return; }
+    var q=parseInt($("#qty").value,10);
+    items.push({
+      id:Date.now()+"-"+Math.floor(performance.now()),
+      name:n, date:dt, place:$("#place").value,
+      qty:(q>0?q:"")
+    });
+    save();
+    $("#name").value=""; $("#date").value=""; $("#place").value=""; $("#qty").value="";
+    render(); toast("追加しました");
+  });
+
+  // delete (event delegation) -- "食べた/使った"
+  $("#list").addEventListener("click",function(e){
+    if(!e.target.classList.contains("del"))return;
+    var li=e.target.closest("li"); if(!li)return;
+    var id=li.getAttribute("data-id");
+    items=items.filter(function(i){return String(i.id)!==String(id);});
+    save(); render(); toast("消費しました");
+  });
+
+  // settings modal
+  $("#gear").addEventListener("click",function(){$("#modal").classList.add("open");});
+  $("#closeModal").addEventListener("click",function(){$("#modal").classList.remove("open");});
+  $("#modal").addEventListener("click",function(e){if(e.target===this)this.classList.remove("open");});
+  $("#export").addEventListener("click",function(){
+    var data=JSON.stringify({items:items},null,2);
+    try{
+      var b=new Blob([data],{type:"application/json"});
+      var a=document.createElement("a");a.href=URL.createObjectURL(b);
+      a.download="kigen-memo-backup.json";a.click();
+    }catch(e){ prompt("以下をコピーして保存してください",data); }
+  });
+  $("#clear").addEventListener("click",function(){
+    if(confirm("登録した食材をすべて削除します。よろしいですか？")){
+      store.del(); items=[]; render(); $("#modal").classList.remove("open");
+      toast("削除しました");
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
