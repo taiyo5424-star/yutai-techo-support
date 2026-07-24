@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e0553f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="複数の料理を同時進行。名前付きタイマーをいくつも同時に動かせます。">
+<title>料理マルチタイマー｜複数同時カウントダウン</title>
+<style>
+  :root{
+    --accent:#e0553f; --accent-d:#c33f2b; --accent-soft:#fdece9;
+    --bg:#faf7f5; --card:#ffffff; --text:#2b2622; --sub:#8a827b;
+    --line:#eee6e0; --ok:#3fa66a; --warn:#e0952b; --danger:#d9534f;
+    --radius:16px; --shadow:0 2px 12px rgba(80,60,50,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#18140f; --card:#241e18; --text:#f2ece6; --sub:#a89f96;
+      --line:#372f27; --accent-soft:#3a1c17; --shadow:0 2px 12px rgba(0,0,0,.4);}
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    padding-bottom:env(safe-area-inset-bottom);-webkit-text-size-adjust:100%}
+  body::after{content:"";position:fixed;inset:0;background:var(--accent);opacity:0;pointer-events:none;z-index:70}
+  body.flash::after{animation:flashAnim 1.1s ease-in-out}
+  @keyframes flashAnim{0%,100%{opacity:0}18%,58%{opacity:.16}}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--accent),var(--accent-d));
+    color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  header .ico{font-size:24px;line-height:1}
+  header h1{font-size:18px;margin:0;font-weight:700;flex:1}
+  header button.gear{background:rgba(255,255,255,.2);border:0;color:#fff;font-size:18px;
+    width:36px;height:36px;border-radius:50%;cursor:pointer}
+  main{max-width:640px;margin:0 auto;padding:16px 16px 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  h2{font-size:15px;margin:0 0 12px;color:var(--sub);font-weight:700;letter-spacing:.02em}
+  .btn{appearance:none;border:0;border-radius:12px;padding:13px 18px;font-size:16px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:transform .05s,filter .15s;width:100%}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:var(--accent-soft);color:var(--accent-d)}
+  .btn-sm{width:auto;padding:9px 12px;font-size:14px;border-radius:10px}
+  input,select,textarea{font-family:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--card);color:var(--text);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+  .row{display:flex;gap:8px;align-items:center}
+  .empty{text-align:center;color:var(--sub);padding:20px 8px;font-size:14px}
+  /* ---- add form ---- */
+  .time-in{display:flex;align-items:center;gap:8px;margin:10px 0}
+  .time-in input{text-align:center;font-size:20px;font-weight:700;letter-spacing:.02em}
+  .time-in span{color:var(--sub);font-size:15px}
+  .presets{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .chip{appearance:none;border:1px solid var(--line);background:var(--accent-soft);color:var(--accent-d);
+    border-radius:20px;padding:8px 14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+  .chip:active{transform:scale(.96)}
+  .subrow{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px}
+  .link-btn{background:none;border:0;color:var(--accent-d);font-size:14px;font-weight:700;cursor:pointer;
+    font-family:inherit;padding:6px 4px}
+  /* ---- timers ---- */
+  ul.list{list-style:none;margin:0;padding:0}
+  li.timer{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;background:var(--card)}
+  li.timer:last-child{margin-bottom:0}
+  li.timer .thead{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  li.timer .tname{flex:1;font-weight:700;font-size:16px;word-break:break-word}
+  li.timer .tstate{font-size:12px;color:var(--sub);background:var(--bg);padding:2px 9px;border-radius:20px;white-space:nowrap}
+  li.timer.run .tstate{color:var(--ok)}
+  li.timer .tdisplay{font-size:44px;font-weight:800;line-height:1.1;letter-spacing:.02em;
+    font-variant-numeric:tabular-nums;color:var(--text);text-align:center;margin:4px 0 8px}
+  li.timer.run .tdisplay{color:var(--accent-d)}
+  li.timer .tbar{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin-bottom:12px}
+  li.timer .tbar-fill{height:100%;background:var(--accent);border-radius:8px;transition:width .25s linear}
+  li.timer .tctrl{display:flex;gap:8px}
+  li.timer .tctrl .btn{flex:1}
+  .del{background:none;border:0;color:var(--danger);font-size:18px;cursor:pointer;padding:4px 8px}
+  li.timer.ringing{border-color:var(--accent);animation:pulse 1s ease-in-out infinite}
+  li.timer.ringing .tdisplay{color:var(--accent-d)}
+  @keyframes pulse{0%,100%{background:var(--card);box-shadow:0 0 0 0 rgba(224,85,63,.0)}
+    50%{background:var(--accent-soft);box-shadow:0 0 0 4px rgba(224,85,63,.18)}}
+  /* ---- floating stop-alarm bar ---- */
+  .ring-bar{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);
+    z-index:90;background:var(--accent-d);color:#fff;border-radius:16px;padding:11px 14px;
+    display:flex;gap:12px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.32);max-width:calc(100% - 24px);
+    animation:pulse2 1s ease-in-out infinite}
+  .ring-bar[hidden]{display:none}
+  .ring-bar span{font-weight:700;font-size:14px}
+  .ring-bar .btn{background:#fff;color:var(--accent-d);width:auto;white-space:nowrap}
+  @keyframes pulse2{0%,100%{box-shadow:0 8px 24px rgba(0,0,0,.32)}50%{box-shadow:0 8px 28px rgba(224,85,63,.6)}}
+  /* ---- shared components ---- */
+  .ad-slot{margin:16px auto;max-width:640px;min-height:56px;border:1px dashed var(--line);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;background:var(--card)}
+  footer{max-width:640px;margin:0 auto;padding:18px 16px 34px;color:var(--sub);font-size:12px;text-align:center}
+  footer a{color:var(--sub)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+  .modal.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))}
+  .sheet h3{margin:0 0 12px;font-size:17px}
+  .sheet .btn{margin-top:8px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#2b2622;color:#fff;
+    padding:10px 18px;border-radius:22px;font-size:14px;opacity:0;transition:.25s;z-index:99;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <span class="ico">⏲️</span>
+  <h1>料理マルチタイマー</h1>
+  <button class="gear" id="gear" aria-label="設定">⚙️</button>
+</header>
+
+<main>
+  <div class="card">
+    <h2>タイマーを追加</h2>
+    <form id="addForm" autocomplete="off">
+      <input id="tname" placeholder="名前（例：パスタ）" maxlength="20">
+      <div class="time-in">
+        <input id="tmin" type="number" min="0" max="180" step="1" placeholder="0" inputmode="numeric" aria-label="分">
+        <span>分</span>
+        <input id="tsec" type="number" min="0" max="59" step="1" placeholder="0" inputmode="numeric" aria-label="秒">
+        <span>秒</span>
+      </div>
+      <button class="btn btn-primary" type="submit">＋ 追加して開始</button>
+    </form>
+    <div class="presets" id="presets">
+      <button class="chip" data-sec="60" type="button">1分</button>
+      <button class="chip" data-sec="180" type="button">3分</button>
+      <button class="chip" data-sec="300" type="button">5分</button>
+      <button class="chip" data-sec="600" type="button">10分</button>
+      <button class="chip" data-sec="900" type="button">15分</button>
+    </div>
+    <div class="subrow">
+      <button class="link-btn" id="testSound" type="button">🔊 音を確認</button>
+      <span style="color:var(--sub);font-size:12px">プリセットは名前があれば反映します</span>
+    </div>
+  </div>
+
+  <div class="ad-slot"><!-- AdMob等の広告をここに表示 -->広告スペース</div>
+
+  <div class="card">
+    <h2>タイマー一覧（<span id="count">0</span>件）</h2>
+    <ul class="list" id="timers"></ul>
+    <p class="empty" id="empty">まだタイマーがありません。上の入力欄かプリセットから、料理ごとに追加しましょう。複数を同時に動かせます。</p>
+  </div>
+</main>
+
+<footer>
+  <p>データはこの端末内にのみ保存されます。外部送信はありません。</p>
+  <p><a href="../../privacy-cooking-timer.html">プライバシーポリシー</a>　|　<a href="../index.html">アプリ一覧</a></p>
+  <p>© 料理マルチタイマー</p>
+</footer>
+
+<div class="ring-bar" id="ringBar" hidden>
+  <span id="ringMsg">⏰ 鳴っています</span>
+  <button class="btn btn-sm" id="stopAlarm" type="button">🔔 音を止める</button>
+</div>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3>設定</h3>
+    <button class="btn btn-ghost" id="export">データを書き出す（バックアップ）</button>
+    <button class="btn btn-ghost" id="closeModal">閉じる</button>
+    <button class="btn" id="clear" style="background:var(--danger);color:#fff">すべてのデータを削除</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="cooking-timer";
+  // ---- storage helper (shared pattern across all apps) ----
+  var store={
+    get:function(k,d){ try{var v=localStorage.getItem(KEY+":"+k);return v==null?d:JSON.parse(v);}catch(e){return d;} },
+    set:function(k,v){ try{localStorage.setItem(KEY+":"+k,JSON.stringify(v));}catch(e){} },
+    del:function(){ try{Object.keys(localStorage).forEach(function(x){if(x.indexOf(KEY+":")===0)localStorage.removeItem(x);});}catch(e){} }
+  };
+  function $(s){return document.querySelector(s);}
+  function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show");},2200);}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function uid(){ return Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36); }
+
+  // ---- state ----
+  // timer: {id,name,total,remaining,running,done,endAt}
+  var timers=(store.get("timers",[])||[]).map(function(t){
+    var total=Math.max(0,parseInt(t.total,10)||0);
+    var rem=(t.remaining==null?total:Math.max(0,parseInt(t.remaining,10)||0));
+    return {id:t.id||uid(),name:t.name||"タイマー",total:total,remaining:rem,running:false,done:false,endAt:0};
+  });
+
+  function serialize(){
+    return timers.map(function(t){
+      var rem=t.running?Math.max(0,(t.endAt-Date.now())/1000):t.remaining;
+      return {id:t.id,name:t.name,total:t.total,remaining:Math.round(rem)};
+    });
+  }
+  function save(){ store.set("timers",serialize()); }
+
+  function fmt(sec){
+    sec=Math.max(0,Math.round(sec));
+    var m=Math.floor(sec/60), s=sec%60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+
+  // ---- audio alarm (WebAudio, autoplay-safe) ----
+  var audioCtx=null, beepTimer=null, flashT=null;
+  function ensureAudio(){
+    try{
+      if(!audioCtx){ var AC=window.AudioContext||window.webkitAudioContext; if(AC) audioCtx=new AC(); }
+      if(audioCtx && audioCtx.state==="suspended"){ audioCtx.resume(); }
+    }catch(e){}
+  }
+  function playBeep(){
+    try{
+      ensureAudio();
+      if(!audioCtx) return;
+      var t0=audioCtx.currentTime;
+      [0,0.22].forEach(function(off){
+        var o=audioCtx.createOscillator(), g=audioCtx.createGain();
+        o.type="sine"; o.frequency.value=880;
+        o.connect(g); g.connect(audioCtx.destination);
+        var t=t0+off;
+        g.gain.setValueAtTime(0.0001,t);
+        g.gain.exponentialRampToValueAtTime(0.35,t+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+0.18);
+        o.start(t); o.stop(t+0.2);
+      });
+    }catch(e){}
+  }
+  function startBeep(){ if(beepTimer)return; playBeep(); beepTimer=setInterval(playBeep,900); }
+  function stopBeep(){ if(beepTimer){ clearInterval(beepTimer); beepTimer=null; } }
+  function updateAlarm(){
+    var ringing=timers.some(function(t){return t.done;});
+    if(ringing){ startBeep(); } else { stopBeep(); }
+    var bar=$("#ringBar");
+    if(ringing){
+      var names=timers.filter(function(t){return t.done;}).map(function(t){return t.name;});
+      $("#ringMsg").textContent="⏰ "+(names.length>1?names.length+"件":names[0])+" ができました！";
+      bar.hidden=false;
+    } else { bar.hidden=true; }
+  }
+  function flash(){
+    document.body.classList.remove("flash");
+    // force reflow so the animation can restart
+    void document.body.offsetWidth;
+    document.body.classList.add("flash");
+    clearTimeout(flashT); flashT=setTimeout(function(){document.body.classList.remove("flash");},1200);
+  }
+  function notifyComplete(t){
+    try{ if(navigator.vibrate) navigator.vibrate([300,150,300,150,400]); }catch(e){}
+    flash();
+    toast(t.name+"ができました！");
+  }
+
+  // ---- timer operations ----
+  function addTimer(name,totalSec,autostart){
+    totalSec=Math.round(totalSec);
+    if(!(totalSec>0)){ toast("時間を入力してください"); return false; }
+    if(totalSec>359999) totalSec=359999; // cap ~99:59:59 worth of seconds
+    var t={id:uid(),name:(name&&name.trim())||"タイマー",total:totalSec,remaining:totalSec,running:false,done:false,endAt:0};
+    timers.push(t);
+    if(autostart) startTimer(t);
+    save(); render(); updateAlarm();
+    return true;
+  }
+  function startTimer(t){
+    ensureAudio();
+    if(t.remaining<=0){ t.remaining=t.total; }
+    if(t.remaining<=0) return;
+    t.running=true; t.done=false;
+    t.endAt=Date.now()+Math.round(t.remaining*1000);
+  }
+  function pauseTimer(t){
+    if(!t.running) return;
+    t.remaining=Math.max(0,(t.endAt-Date.now())/1000);
+    t.running=false;
+  }
+  function resetTimer(t){
+    t.running=false; t.remaining=t.total; t.done=false; t.endAt=0;
+  }
+
+  // ---- ticking ----
+  function tick(){
+    var now=Date.now(), needRender=false;
+    timers.forEach(function(t){
+      if(!t.running) return;
+      var rem=(t.endAt-now)/1000;
+      if(rem<=0){
+        t.running=false; t.remaining=0; t.done=true; needRender=true;
+        notifyComplete(t);
+      } else {
+        t.remaining=rem;
+      }
+    });
+    updateTick();
+    if(needRender){ save(); render(); updateAlarm(); }
+  }
+  function updateTick(){
+    for(var i=0;i<timers.length;i++){
+      var t=timers[i];
+      var el=document.querySelector('.timer[data-id="'+t.id+'"]');
+      if(!el) continue;
+      var rem=t.running?Math.max(0,(t.endAt-Date.now())/1000):t.remaining;
+      var disp=el.querySelector(".tdisplay");
+      if(disp) disp.textContent=fmt(rem);
+      var fill=el.querySelector(".tbar-fill");
+      if(fill){ var pct=t.total>0?(rem/t.total*100):0; fill.style.width=Math.max(0,Math.min(100,pct))+"%"; }
+    }
+  }
+
+  // ---- render ----
+  function render(){
+    var list=$("#timers"), empty=$("#empty");
+    $("#count").textContent=timers.length;
+    empty.style.display=timers.length?"none":"block";
+    list.innerHTML=timers.map(function(t){
+      var rem=t.running?Math.max(0,(t.endAt-Date.now())/1000):t.remaining;
+      var pct=t.total>0?Math.max(0,Math.min(100,rem/t.total*100)):0;
+      var cls="timer"+(t.running?" run":"")+(t.done?" ringing":"");
+      var state=t.done?"⏰ 完了":(t.running?"進行中":(rem<t.total&&rem>0?"一時停止":"待機"));
+      var toggleLabel=t.running?"⏸ 一時停止":(t.done?"↺ もう一度":"▶ 開始");
+      return '<li class="'+cls+'" data-id="'+esc(t.id)+'">'+
+        '<div class="thead">'+
+          '<span class="tname">'+esc(t.name)+'</span>'+
+          '<span class="tstate">'+state+'</span>'+
+          '<button class="del" data-act="del" aria-label="削除">🗑</button>'+
+        '</div>'+
+        '<div class="tdisplay">'+fmt(rem)+'</div>'+
+        '<div class="tbar"><div class="tbar-fill" style="width:'+pct+'%"></div></div>'+
+        '<div class="tctrl">'+
+          '<button class="btn btn-primary btn-sm" data-act="toggle">'+toggleLabel+'</button>'+
+          '<button class="btn btn-ghost btn-sm" data-act="reset">↺ リセット</button>'+
+        '</div>'+
+      '</li>';
+    }).join("");
+  }
+
+  // ---- events ----
+  $("#addForm").addEventListener("submit",function(e){
+    e.preventDefault();
+    var name=$("#tname").value;
+    var mm=parseInt($("#tmin").value,10)||0;
+    var ss=parseInt($("#tsec").value,10)||0;
+    if(mm<0)mm=0; if(ss<0)ss=0;
+    var total=mm*60+ss;
+    if(addTimer(name,total,true)){
+      $("#tname").value=""; $("#tmin").value=""; $("#tsec").value="";
+    }
+  });
+
+  $("#presets").addEventListener("click",function(e){
+    var b=e.target.closest("button[data-sec]"); if(!b)return;
+    var sec=parseInt(b.getAttribute("data-sec"),10)||0;
+    var name=$("#tname").value.trim();
+    var label=name||(b.textContent.trim()+"タイマー");
+    if(addTimer(label,sec,true)){ $("#tname").value=""; }
+  });
+
+  $("#timers").addEventListener("click",function(e){
+    var btn=e.target.closest("button[data-act]"); if(!btn)return;
+    var li=e.target.closest(".timer"); if(!li)return;
+    var id=li.getAttribute("data-id");
+    var t=timers.filter(function(x){return String(x.id)===String(id);})[0];
+    if(!t)return;
+    var act=btn.getAttribute("data-act");
+    if(act==="toggle"){ if(t.running) pauseTimer(t); else startTimer(t); }
+    else if(act==="reset"){ resetTimer(t); }
+    else if(act==="del"){ timers=timers.filter(function(x){return x!==t;}); }
+    save(); render(); updateAlarm();
+  });
+
+  $("#testSound").addEventListener("click",function(){ ensureAudio(); playBeep(); toast("音を確認しました"); });
+  $("#stopAlarm").addEventListener("click",function(){
+    timers.forEach(function(t){ t.done=false; });
+    stopBeep(); updateAlarm(); render(); save();
+  });
+
+  // ---- settings modal ----
+  $("#gear").addEventListener("click",function(){$("#modal").classList.add("open");});
+  $("#closeModal").addEventListener("click",function(){$("#modal").classList.remove("open");});
+  $("#modal").addEventListener("click",function(e){if(e.target===this)this.classList.remove("open");});
+  $("#export").addEventListener("click",function(){
+    var data=JSON.stringify({timers:serialize()},null,2);
+    try{
+      var b=new Blob([data],{type:"application/json"});
+      var a=document.createElement("a");a.href=URL.createObjectURL(b);
+      a.download="cooking-timer-backup.json";a.click();
+    }catch(e){ prompt("以下をコピーして保存してください",data); }
+  });
+  $("#clear").addEventListener("click",function(){
+    if(confirm("すべてのタイマーを削除します。よろしいですか？")){
+      stopBeep(); store.del(); timers=[];
+      updateAlarm(); render(); $("#modal").classList.remove("open");
+      toast("削除しました");
+    }
+  });
+
+  // ---- start ----
+  setInterval(tick,250);
+  render();
+  updateAlarm();
+})();
+</script>
+</body>
+</html>
